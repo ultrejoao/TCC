@@ -1,0 +1,80 @@
+{
+  "version": "v1",
+  "algorithm": "rf_xgb_soft_voting_ensemble",
+  "trained_at": "2026-08-26T20:54:01.311065+00:00",
+  "n_windows": 4500,
+  "n_features": 97,
+  "window_seconds": 1.0,
+  "dataset": "KAIST (Jung et al., 2023) - 45 sessoes, 15 especimes",
+  "hyperparameters": {
+    "rf": {
+      "n_estimators": 400,
+      "max_depth": 12,
+      "min_samples_leaf": 3,
+      "class_weight": "balanced"
+    },
+    "xgb": {
+      "n_estimators": 400,
+      "max_depth": 6,
+      "learning_rate": 0.05,
+      "subsample": 0.8,
+      "colsample_bytree": 0.8
+    }
+  },
+  "evaluation": [
+    {
+      "alvo": "severity",
+      "protocolo": "leave-one-specimen-out",
+      "acuracia": "63.0%",
+      "FAILURE": "85.3%",
+      "HEALTHY": "69.6%",
+      "WARNING": "0.0%",
+      "bearing": NaN,
+      "misalignment": NaN,
+      "normal": NaN,
+      "unbalance": NaN
+    },
+    {
+      "alvo": "severity",
+      "protocolo": "leave-one-load-out (vazamento declarado)",
+      "acuracia": "95.3%",
+      "FAILURE": "100.0%",
+      "HEALTHY": "89.3%",
+      "WARNING": "85.8%",
+      "bearing": NaN,
+      "misalignment": NaN,
+      "normal": NaN,
+      "unbalance": NaN
+    },
+    {
+      "alvo": "fault_type",
+      "protocolo": "leave-one-specimen-out",
+      "acuracia": "88.7%",
+      "FAILURE": NaN,
+      "HEALTHY": NaN,
+      "WARNING": NaN,
+      "bearing": "100.0%",
+      "misalignment": "66.6%",
+      "normal": "76.3%",
+      "unbalance": "98.8%"
+    },
+    {
+      "alvo": "fault_type",
+      "protocolo": "leave-one-load-out (vazamento declarado)",
+      "acuracia": "80.6%",
+      "FAILURE": NaN,
+      "HEALTHY": NaN,
+      "WARNING": NaN,
+      "bearing": "100.0%",
+      "misalignment": "86.1%",
+      "normal": "77.2%",
+      "unbalance": "66.7%"
+    }
+  ],
+  "evaluation_note": "Metricas obtidas por validacao cruzada (04_evaluate.py), NAO por este treino. Os dois protocolos estabelecem cenarios de dificuldade distintos para a generalizacao do modelo, fornecendo uma faixa de referencia metodologica para interpretar resultados futuros obtidos em dados de campo.",
+  "known_limitations": [
+    "Recall de WARNING = 0,0% sob leave-one-specimen-out: o dataset tem um unico especime por nivel de severidade.",
+    "Especime saudavel unico: nenhuma particao avalia generalizacao para uma maquina saudavel nunca vista.",
+    "Selecao de features e calibracao da matriz de decisao foram feitas sobre os mesmos folds de avaliacao (otimismo nao quantificado)."
+  ]
+}
