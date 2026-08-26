@@ -1,0 +1,5 @@
+alvo,protocolo,acuracia,FAILURE,HEALTHY,WARNING,bearing,misalignment,normal,unbalance
+severity,leave-one-specimen-out,63.0%,85.3%,69.6%,0.0%,,,,
+severity,leave-one-load-out (vazamento declarado),95.3%,100.0%,89.3%,85.8%,,,,
+fault_type,leave-one-specimen-out,88.7%,,,,100.0%,66.6%,76.3%,98.8%
+fault_type,leave-one-load-out (vazamento declarado),80.6%,,,,100.0%,86.1%,77.2%,66.7%

@@ -1,0 +1,30 @@
+# Sinais brutos do KAIST (~7,6 GB) - baixar do Mendeley, ver README
+ml/data/raw/
+
+# Dados derivados (regeneraveis pelos scripts)
+ml/data/interim/*.parquet
+
+# Modelo serializado (regeneravel por 06_train_production.py)
+ml/artifacts/*.joblib
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+env/
+.ipynb_checkpoints/
+
+# Ferramentas
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Sistema operacional
+Thumbs.db
+desktop.ini
+.DS_Store
+
+# Arquivos temporarios do Office/Windows
+~$*

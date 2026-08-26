@@ -1,0 +1,45 @@
+"""Caminhos e constantes do pipeline de dados KAIST."""
+
+from pathlib import Path
+
+# Pacotes originais baixados do Mendeley (zips) - fonte de extracao, fora do projeto.
+KAIST_DOWNLOAD = Path(r"C:\Users\João Vitor\Downloads\DATA KAIST")
+CURRENT_TEMP_ZIP = KAIST_DOWNLOAD / "current,temp.zip"
+ACOUSTIC_ZIP = KAIST_DOWNLOAD / "acoustic.zip"   # apenas 5 sessoes -> fora do modelo v1
+
+ML_ROOT = Path(__file__).resolve().parent
+DATA_RAW = ML_ROOT / "data" / "raw"              # sinais brutos, ~7.6 GB (fora do git)
+DATA_INTERIM = ML_ROOT / "data" / "interim"      # inventario, features
+ARTIFACTS = ML_ROOT / "artifacts"                # modelos serializados
+
+VIBRATION_DIR = DATA_RAW / "vibration"           # 45 .mat  (4 acelerometros)
+TDMS_DIR = DATA_RAW / "current_temp"             # 45 .tdms (3 corrente + 2 termopar)
+
+# --- caracteristicas dos sinais --------------------------------------------
+FS_VIBRATION = 25_600.0        # Hz, nominal (x_values.increment do .mat)
+FS_CURRENT_TEMP = 25_608.19    # Hz, real do FlexLogger (levemente diferente)
+
+ROTATION_HZ = 50.15            # 3009 rpm, medido por FFT (motor de 2 polos)
+
+# Vibracao: 4 acelerometros, gravados em MKS (m/s^2). Fator p/ converter em g.
+VIBRATION_CHANNELS = ["acc1", "acc2", "acc3", "acc4"]
+MS2_TO_G = 1.0 / 9.80665
+
+# Corrente/temperatura: grupo "Log" do TDMS.
+TDMS_GROUP = "Log"
+TDMS_CHANNEL_MAP = {
+    "cDAQ9185-1F486B5Mod1/ai0": "temp1",      # termopar mancal 1 (degC)
+    "cDAQ9185-1F486B5Mod1/ai1": "temp2",      # termopar mancal 2 (degC)
+    "cDAQ9185-1F486B5Mod2/ai0": "current_r",  # fase R (A)
+    "cDAQ9185-1F486B5Mod2/ai2": "current_s",  # fase S (A) - vazia nas sessoes BPFO
+    "cDAQ9185-1F486B5Mod2/ai3": "current_t",  # fase T (A) - vazia nas sessoes BPFO
+}
+
+# Unica fase disponivel em 100% das sessoes (ver docs/01-inventario-dataset.md).
+CURRENT_CHANNEL = "current_r"
+
+# Classe de maquina ISO 10816-1 assumida para a bancada do KAIST (motor pequeno).
+ISO_MACHINE_CLASS = "I"
+
+for _d in (DATA_RAW, DATA_INTERIM, ARTIFACTS, VIBRATION_DIR, TDMS_DIR):
+    _d.mkdir(parents=True, exist_ok=True)
