@@ -416,3 +416,75 @@ correta como HEALTHY.
 Note-se ainda a diferença de confiança: sobre a sessão de desalinhamento
 reservada o modelo respondeu 90,4 %, enquanto sobre sessões de treino responde
 100 %. Essa distância é o que a reserva torna visível.
+
+
+## 12. O que define severidade e confiança — e por que não são a mesma coisa
+
+### Severidade
+
+É um dos dois alvos do ensemble, com rótulo definido em
+`ml/kaist/sessions.py` pelo mapeamento por família de falha:
+
+| Condição | Classe |
+| :--- | :--- |
+| Nível de menor severidade da família | WARNING |
+| Níveis intermediário e superior | FAILURE |
+| Condição normal | HEALTHY |
+
+Em produção, Random Forest e XGBoost votam por média de probabilidades
+(*soft voting*) e vence a classe de maior valor. A severidade tem **sua própria
+distribuição de probabilidade**, em `severity_probabilities`.
+
+### Confiança
+
+Não é a probabilidade da severidade. É calculada em
+`ml/kaist/decision.py::_confidence`:
+
+```
+confidence = P(tipo de falha) × (0,5 + 0,5 × e^(−gap))
+```
+
+onde `gap` é o quanto a assinatura física se afasta do tipo predito, medido em
+distância normalizada aos protótipos. A física concordando plenamente
+(`gap = 0`) deixa a confiança igual à probabilidade do tipo; discordando muito,
+ela cai até metade desse valor.
+
+Portanto a confiança responde **"que grau de certeza há sobre o TIPO de
+falha, considerado o apoio da evidência física?"** — e não "qual a chance de o
+motor falhar".
+
+### Por que a distinção importa na interface
+
+As duas grandezas divergem, e às vezes bastante. Medição real de
+`0Nm_BPFO_10`, espécime reservado:
+
+| Grandeza | Valor |
+| :--- | ---: |
+| Probabilidade do tipo (rolamento) | 99,3 % |
+| Probabilidade da severidade (FAILURE) | **60,3 %** |
+| Confiança exibida | 99,3 % |
+
+Exibir "FAILURE" ao lado de "99,3 %" leva o técnico a concluir que o sistema
+tem 99 % de certeza de que o motor vai falhar. Ele tem 99 % de certeza de que o
+defeito é **de rolamento**, e apenas 60 % de que a gravidade é FAILURE e não
+WARNING — coerente, aliás, com a dificuldade já documentada de graduar
+severidade (seções 2 e 9).
+
+Por isso a interface passou a separar as três leituras: probabilidade do tipo,
+probabilidade da severidade e confiança geral, cada uma com seu rótulo.
+
+### Efeito da penalidade física
+
+Nas medições dos espécimes reservados, quando a física concorda a confiança
+iguala a probabilidade do tipo; quando discorda, a penalidade aparece:
+
+| Sessão | P(tipo) | Física concorda | Confiança |
+| :--- | ---: | :--- | ---: |
+| `0Nm_BPFI_10` | 1,000 | sim | 1,000 |
+| `0Nm_Misalign_03` | 0,904 | sim | 0,904 |
+| `0Nm_Unbalance_3318mg` | 1,000 | **não** (indica normal) | 0,921 |
+| `0Nm_Unbalance_2239mg` | 1,000 | **não** (indica normal) | 0,880 |
+
+Os dois últimos casos ilustram o viés conhecido da camada física com
+desbalanceamento — ela o confunde com condição normal — e mostram a penalidade
+agindo de forma graduada, e não como um degrau.

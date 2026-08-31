@@ -108,7 +108,7 @@ export default function Dashboard() {
                   <th style={{ width: 44 }}>Crit.</th>
                   <th>Condição</th>
                   <th>Tipo</th>
-                  <th style={{ width: 150 }}>Confiança</th>
+                  <th style={{ width: 150 }}>Confiança no tipo</th>
                   <th style={{ width: 80 }}>Prioridade</th>
                 </tr>
               </thead>
@@ -154,8 +154,11 @@ export default function Dashboard() {
                         />
                       </div>
                     </td>
-                    <td data-rotulo="Confiança">
+                    <td data-rotulo="Confiança no tipo">
                       {m.confidence !== null && <BarraConfianca valor={m.confidence} />}
+                      <div className="faint" style={{ marginTop: 2 }}>
+                        certeza sobre o tipo, não sobre a gravidade
+                      </div>
                     </td>
                     <td data-rotulo="Prioridade">
                       <span

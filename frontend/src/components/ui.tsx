@@ -55,7 +55,14 @@ export function Erro({ children }: { children: ReactNode }) {
   return <div className="aviso erro">{children}</div>;
 }
 
-/** Barra de confiança do diagnóstico. */
+/**
+ * Barra de probabilidade.
+ *
+ * O rótulo é obrigatório: sem ele, um número solto ao lado da severidade é lido
+ * como "certeza de que o motor vai falhar", quando pode ser a certeza sobre o
+ * TIPO de falha — grandezas diferentes, que chegam a divergir bastante
+ * (ex.: tipo com 99,3 % e severidade com 60,3 % na mesma medição).
+ */
 export function BarraConfianca({ valor }: { valor: number }) {
   const cor = valor >= 0.7 ? "var(--healthy)" : valor >= 0.5 ? "var(--warning)" : "var(--failure)";
   return (
