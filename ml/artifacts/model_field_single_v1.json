@@ -1,0 +1,91 @@
+{
+  "profile": "field_single",
+  "version": "v1",
+  "requires": {
+    "vibration_channels": 1,
+    "current": false
+  },
+  "description": "um canal de vibracao (instrumentacao de campo)",
+  "feature_columns": [
+    "vib_rms",
+    "vib_peak",
+    "vib_p2p",
+    "vib_std",
+    "vib_kurtosis",
+    "vib_skewness",
+    "vib_crest_factor",
+    "vib_shape_factor",
+    "vib_impulse_factor",
+    "vib_clearance_factor",
+    "vib_amp_1x",
+    "vib_amp_2x",
+    "vib_amp_3x",
+    "vib_ratio_2x_1x",
+    "vib_ratio_3x_1x",
+    "vib_band_lo",
+    "vib_band_mid",
+    "vib_band_hi",
+    "vib_band_vhi",
+    "vib_ratio_hi_total",
+    "vib_spectral_centroid",
+    "iso_v_rms_mms",
+    "iso_v_1x_mms",
+    "iso_v_2x_mms",
+    "iso_a_hf_g"
+  ],
+  "indicator_columns": [
+    "iso_v_rms_mms",
+    "iso_v_1x_mms",
+    "iso_v_2x_mms",
+    "iso_a_hf_g"
+  ],
+  "metrics": {
+    "protocol": "leave-one-specimen-out",
+    "fault_type_accuracy": 0.854,
+    "severity_accuracy": 0.561,
+    "fault_type_recall": {
+      "bearing": 1.0,
+      "unbalance": 0.96,
+      "misalignment": 0.66,
+      "normal": 0.59
+    },
+    "severity_recall": {
+      "FAILURE": 0.81,
+      "HEALTHY": 0.23,
+      "WARNING": 0.07
+    },
+    "binary_detection": {
+      "sensitivity": 0.937,
+      "specificity": 0.233
+    }
+  },
+  "known_limitations": [
+    "Reconhecimento da condicao normal e fraco (recall 59% no tipo, 23% na severidade): sem os demais canais, a magnitude e dominada pela carga.",
+    "Alta sensibilidade (93,7%) com baixa especificidade (23,3%): o perfil tende a sinalizar motores saudaveis. Adequado a TRIAGEM, nao a diagnostico conclusivo de normalidade.",
+    "Herda as limitacoes do perfil completo quanto a graduacao de severidade."
+  ],
+  "algorithm": "rf_xgb_soft_voting_ensemble",
+  "trained_at": "2026-08-31T15:04:28.216236+00:00",
+  "n_windows": 4500,
+  "n_features": 25,
+  "window_seconds": 1.0,
+  "dataset": "KAIST (Jung et al., 2023) - 45 sessoes, 15 especimes",
+  "artifact_path": "C:\\Users\\João Vitor\\Desktop\\tcc\\ml\\artifacts\\model_field_single_v1.joblib",
+  "artifact_sha256": "5ffb34391d2fec2585bc09133517e6364c76784ee9d8c4e93854265986a4b858",
+  "hyperparameters": {
+    "rf": {
+      "n_estimators": 400,
+      "max_depth": 12,
+      "min_samples_leaf": 3,
+      "class_weight": "balanced"
+    },
+    "xgb": {
+      "n_estimators": 400,
+      "max_depth": 6,
+      "learning_rate": 0.05,
+      "subsample": 0.8,
+      "colsample_bytree": 0.8
+    }
+  },
+  "evaluation_note": "Metricas obtidas por validacao cruzada leave-one-specimen-out, NAO por este treino. Os protocolos estabelecem cenarios de dificuldade distintos para a generalizacao do modelo, fornecendo uma faixa de referencia metodologica para interpretar resultados futuros obtidos em dados de campo."
+}

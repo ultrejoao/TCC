@@ -107,7 +107,8 @@ ml/
     03_extract_features.py      matriz de features (4.500 janelas × 97)
     04_evaluate.py              avaliação nos dois alvos e dois protocolos
     05_calibrate_decision.py    calibração da matriz de decisão
-    06_train_production.py      treino e serialização do modelo
+    08_single_channel_profile.py  features do perfil de canal único
+    09_train_profiles.py        treina e serializa os dois perfis
     07_generate_oof.py          predições out-of-fold para a demonstração
 docs/
   01-inventario-dataset.md      achados do dataset que alteram a especificação
@@ -133,7 +134,7 @@ python ml/scripts/04_evaluate.py
 ```
 
 ```bash
-python ml/scripts/06_train_production.py
+python ml/scripts/09_train_profiles.py
 ```
 
 ```bash

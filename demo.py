@@ -71,10 +71,10 @@ def campo(rotulo, valor, largura=38):
 
 
 def carregar_modelo():
-    caminho = ARTIFACTS / "model_v1.joblib"
+    caminho = ARTIFACTS / "model_kaist_full_v1.joblib"
     if not caminho.exists():
         print("\n[ERRO] Modelo nao encontrado.")
-        print("Rode primeiro:  python ml/scripts/06_train_production.py\n")
+        print("Rode primeiro:  python ml/scripts/09_train_profiles.py\n")
         sys.exit(1)
     return joblib.load(caminho)
 

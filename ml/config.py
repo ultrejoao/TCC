@@ -38,6 +38,12 @@ TDMS_CHANNEL_MAP = {
 # Unica fase disponivel em 100% das sessoes (ver docs/01-inventario-dataset.md).
 CURRENT_CHANNEL = "current_r"
 
+# Artefatos por perfil de instrumentacao (ver ml/signals/pipeline.py).
+MODEL_ARTIFACTS = {
+    "kaist_full": ARTIFACTS / "model_kaist_full_v1.joblib",
+    "field_single": ARTIFACTS / "model_field_single_v1.joblib",
+}
+
 # Classe de maquina ISO 10816-1 assumida para a bancada do KAIST (motor pequeno).
 ISO_MACHINE_CLASS = "I"
 
