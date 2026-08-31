@@ -9,16 +9,14 @@
 
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { ApiError, get, post } from "../api/client";
+import { ApiError, post } from "../api/client";
 import {
   ROTULO_CRITICIDADE,
   type Criticality,
-  type MotorDetail,
   type TreeArea,
   type TreeLine,
   type TreePlant,
 } from "../api/types";
-import EditarMotor from "../components/EditarMotor";
 import { Carregando, Erro, SeloCriticidade, Vazio } from "../components/ui";
 import { useApi } from "../hooks/useApi";
 
@@ -67,7 +65,6 @@ export default function Cadastro() {
   const [form, setForm] = useState<Formulario>(null);
   const [erro, setErro] = useState<string | null>(null);
   const [salvando, setSalvando] = useState(false);
-  const [editandoMotor, setEditandoMotor] = useState<MotorDetail | null>(null);
 
   // campos compartilhados entre os formularios
   const [codigo, setCodigo] = useState("");
@@ -128,17 +125,6 @@ export default function Cadastro() {
     }
   }
 
-  async function abrirEdicao(motorId: string) {
-    setErro(null);
-    try {
-      // a arvore traz so o resumo; o formulario precisa do cadastro completo
-      setEditandoMotor(await get<MotorDetail>(`/motors/${motorId}`));
-      setForm(null);
-    } catch (ex) {
-      setErro(ex instanceof ApiError ? ex.detail : "Não foi possível abrir o motor.");
-    }
-  }
-
   if (arvore.carregando) return <Carregando linhas={5} />;
   if (arvore.erro) return <Erro>{arvore.erro.detail}</Erro>;
 
@@ -155,21 +141,6 @@ export default function Cadastro() {
         </div>
         <button onClick={() => abrir({ tipo: "planta" })}>+ Nova planta</button>
       </div>
-
-      {editandoMotor && (
-        <EditarMotor
-          motor={editandoMotor}
-          aoSalvar={() => {
-            setEditandoMotor(null);
-            arvore.recarregar();
-          }}
-          aoCancelar={() => setEditandoMotor(null)}
-          aoExcluir={() => {
-            setEditandoMotor(null);
-            arvore.recarregar();
-          }}
-        />
-      )}
 
       {form && (
         <section className="cartao" style={{ borderColor: "var(--accent-dim)" }}>
@@ -450,17 +421,6 @@ export default function Cadastro() {
                                 {m.tag}
                               </Link>
                               <span className="faint">{m.name}</span>
-                              <button
-                                className="secundario"
-                                onClick={() => abrirEdicao(m.id)}
-                                style={{
-                                  marginLeft: "auto",
-                                  padding: "0.2rem 0.6rem",
-                                  fontSize: "0.78rem",
-                                }}
-                              >
-                                editar
-                              </button>
                             </div>
                           ))}
                         </div>
