@@ -8,6 +8,40 @@ predição do modelo com indicadores normativos da ISO 10816/20816.
 
 ---
 
+## Subir o sistema completo (Docker)
+
+```bash
+cp .env.example .env
+```
+
+Edite o `.env` e defina `POSTGRES_PASSWORD` e `JWT_SECRET_KEY`. Gere a chave com:
+
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(64))"
+```
+
+```bash
+docker compose up -d --build
+```
+
+A interface fica em **http://localhost:8080**. Interface e API são servidas na
+mesma origem pelo nginx — os cookies de autenticação são httpOnly e SameSite, e
+seriam tratados como *third-party* (portanto descartados) se estivessem em
+origens diferentes.
+
+Crie o primeiro usuário — não há usuário padrão embutido na imagem, de propósito:
+
+```bash
+docker compose exec api python scripts/seed_admin.py --email voce@empresa.com --name "Seu Nome"
+```
+
+Os três serviços: `db` (PostgreSQL, sem porta exposta), `api` (FastAPI com a
+camada de ML no mesmo processo) e `web` (nginx servindo a interface e fazendo
+proxy da API). O entrypoint da API aplica as migrations e registra os modelos
+antes de atender.
+
+---
+
 ## Como rodar a demonstração
 
 **Pré-requisitos** (uma vez só):
@@ -91,7 +125,10 @@ Detalhamento em [`docs/02-resultados-baseline.md`](docs/02-resultados-baseline.m
 ## Estrutura
 
 ```
-demo.py                         demonstração do sistema
+docker-compose.yml              banco, API e interface
+demo.py                         demonstração do sistema (sem containers)
+backend/                        FastAPI, ML e migrations
+frontend/                       React + TypeScript + Vite
 ml/
   config.py                     caminhos e constantes
   kaist/

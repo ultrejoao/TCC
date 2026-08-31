@@ -34,7 +34,24 @@ limiter = Limiter(key_func=get_remote_address, default_limits=["200/minute"])
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    app.state.model_bundle = None       # carregado sob demanda na inferencia
+    """Carrega os modelos na subida.
+
+    Carregar sob demanda faria a PRIMEIRA medicao do dia custar ~1,3 s contra os
+    ~250 ms das seguintes — e essa primeira e justamente a de um tecnico parado
+    ao lado da maquina esperando o diagnostico. Pre-carregar move o custo para a
+    inicializacao, onde ninguem espera.
+    """
+    from app.ml.predictor import get_predictor
+
+    preditor = get_predictor()
+    for perfil in preditor.available_profiles():
+        try:
+            preditor.load(perfil)
+            print(f"[ml] perfil '{perfil}' carregado")
+        except Exception as exc:                      # noqa: BLE001
+            # a ausencia de um artefato nao impede a API de subir: o endpoint
+            # de medicao responde 503 com a orientacao, e o resto segue util
+            print(f"[ml] perfil '{perfil}' indisponivel: {exc}")
     yield
 
 

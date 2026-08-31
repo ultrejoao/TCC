@@ -137,12 +137,12 @@
     "Selecao de features e calibracao da matriz de decisao foram feitas sobre os mesmos folds de avaliacao (otimismo nao quantificado)."
   ],
   "algorithm": "rf_xgb_soft_voting_ensemble",
-  "trained_at": "2026-08-31T15:04:25.385121+00:00",
+  "trained_at": "2026-08-31T16:07:19.742651+00:00",
   "n_windows": 4500,
   "n_features": 97,
   "window_seconds": 1.0,
   "dataset": "KAIST (Jung et al., 2023) - 45 sessoes, 15 especimes",
-  "artifact_path": "C:\\Users\\João Vitor\\Desktop\\tcc\\ml\\artifacts\\model_kaist_full_v1.joblib",
+  "artifact_path": "ml/artifacts/model_kaist_full_v1.joblib",
   "artifact_sha256": "3ff4e7c6c1b92b706fdb36b9c277fa3c1dad67f7b584808ff5c3a184ed06ed37",
   "hyperparameters": {
     "rf": {

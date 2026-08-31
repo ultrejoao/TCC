@@ -41,11 +41,15 @@ def sha256(path: Path) -> str:
 
 def register(db, meta_path: Path) -> MLModel:
     meta = json.loads(meta_path.read_text(encoding="utf-8"))
-    artefato = Path(meta["artifact_path"])
+
+    # O caminho gravado nos metadados e o da maquina que treinou o modelo, e
+    # nao serve em outro sistema — um caminho Windows nem sequer e interpretado
+    # como caminho no Linux. Como o .json e o .joblib sao irmaos com o mesmo
+    # nome base, deriva-se um do outro.
+    artefato = meta_path.with_suffix(".joblib")
     if not artefato.exists():
-        artefato = ARTIFACTS_DIR / artefato.name
-    if not artefato.exists():
-        raise FileNotFoundError(f"artefato ausente: {meta['artifact_path']}")
+        raise FileNotFoundError(
+            f"artefato ausente: {artefato}. Execute ml/scripts/09_train_profiles.py.")
 
     versao = f"{meta['profile']}_{meta['version']}"
     digest = sha256(artefato)

@@ -65,12 +65,12 @@
     "Herda as limitacoes do perfil completo quanto a graduacao de severidade."
   ],
   "algorithm": "rf_xgb_soft_voting_ensemble",
-  "trained_at": "2026-08-31T15:04:28.216236+00:00",
+  "trained_at": "2026-08-31T16:07:22.227117+00:00",
   "n_windows": 4500,
   "n_features": 25,
   "window_seconds": 1.0,
   "dataset": "KAIST (Jung et al., 2023) - 45 sessoes, 15 especimes",
-  "artifact_path": "C:\\Users\\João Vitor\\Desktop\\tcc\\ml\\artifacts\\model_field_single_v1.joblib",
+  "artifact_path": "ml/artifacts/model_field_single_v1.joblib",
   "artifact_sha256": "5ffb34391d2fec2585bc09133517e6364c76784ee9d8c4e93854265986a4b858",
   "hyperparameters": {
     "rf": {

@@ -1,0 +1,14 @@
+.git/
+.venv/
+venv/
+**/__pycache__/
+**/*.pyc
+
+# Sinais brutos: ~7,6 GB que nao entram na imagem
+ml/data/raw/
+ml/data/interim/*.parquet
+
+frontend/node_modules/
+frontend/dist/
+backend/uploads/
+.env

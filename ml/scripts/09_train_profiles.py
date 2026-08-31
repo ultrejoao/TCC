@@ -145,7 +145,8 @@ def build_profile(profile: str, df: pd.DataFrame, feature_cols: list[str]) -> Pa
         "n_features": int(X.shape[1]),
         "window_seconds": 1.0,
         "dataset": "KAIST (Jung et al., 2023) - 45 sessoes, 15 especimes",
-        "artifact_path": str(destino),
+        # relativo a raiz do projeto: caminho absoluto nao sobrevive ao container
+        "artifact_path": destino.relative_to(ARTIFACTS.parent.parent).as_posix(),
         "artifact_sha256": sha,
         "hyperparameters": {
             "rf": {"n_estimators": 400, "max_depth": 12, "min_samples_leaf": 3,
