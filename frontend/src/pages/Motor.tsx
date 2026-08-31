@@ -7,7 +7,7 @@
  */
 
 import { useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   CartesianGrid,
   Legend,
@@ -38,6 +38,7 @@ import {
   dataCurta,
   dataHora,
 } from "../components/ui";
+import EditarMotor from "../components/EditarMotor";
 import { useApi } from "../hooks/useApi";
 
 const CORES_GRAFICO = {
@@ -48,7 +49,9 @@ const CORES_GRAFICO = {
 
 export default function Motor() {
   const { id } = useParams<{ id: string }>();
+  const navegar = useNavigate();
   const [salvando, setSalvando] = useState(false);
+  const [editando, setEditando] = useState(false);
 
   const motor = useApi<MotorDetail>(id ? `/motors/${id}` : null);
   const medicoes = useApi<Page<Measurement>>(
@@ -94,9 +97,30 @@ export default function Motor() {
           <h1>{m.tag}</h1>
           <SeloCriticidade valor={m.criticality} />
           <SeloSeveridade valor={m.last_severity} />
+          {!editando && (
+            <button
+              className="secundario"
+              onClick={() => setEditando(true)}
+              style={{ marginLeft: "auto", padding: "0.35rem 0.8rem", fontSize: "0.85rem" }}
+            >
+              Editar cadastro
+            </button>
+          )}
         </div>
         <p className="dim" style={{ margin: "0.15rem 0 0" }}>{m.name}</p>
       </div>
+
+      {editando && (
+        <EditarMotor
+          motor={m}
+          aoSalvar={() => {
+            setEditando(false);
+            motor.recarregar();
+          }}
+          aoCancelar={() => setEditando(false)}
+          aoExcluir={() => navegar("/planta")}
+        />
+      )}
 
       <div
         className="grade"

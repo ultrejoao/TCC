@@ -1,0 +1,4 @@
+metodo,acuracia
+regra de livro (1x/2x/HF),0.5946666666666667
+regra empirica (protótipos),0.63
+ensemble RF + XGBoost,0.8866666666666667

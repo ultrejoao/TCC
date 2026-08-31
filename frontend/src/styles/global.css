@@ -38,10 +38,16 @@
 }
 
 html,
-body,
-#root {
+body {
   height: 100%;
   margin: 0;
+}
+
+/* min-height, nao height: com altura fixa em 100% o container nao acompanha
+   conteudo mais alto que a viewport, e o cabecalho sticky para de funcionar
+   ao rolar alem dessa altura, deixando area vazia no lugar. */
+#root {
+  min-height: 100%;
 }
 
 body {

@@ -588,3 +588,82 @@ narrativa metodológica: tentou-se a classificação supervisionada de severidad
 mediu-se que ela não generaliza para espécimes inéditos, investigou-se o reforço
 com indicadores normativos, e a decisão de retirá-la da saída primária é
 consequência dessas medições — não uma limitação contornada em silêncio.
+
+
+## 14. Regra de análise de vibração contra o modelo
+
+Gerado por `ml/scripts/10_rule_vs_model.py`.
+
+### A pergunta
+
+Se a análise de assinatura espectral já é conhecimento consolidado — 1× indica
+desbalanceamento, 2× indica desalinhamento, alta frequência indica rolamento —
+qual a contribuição de um modelo de aprendizado? A pergunta merece resposta
+medida, não argumentada.
+
+Três métodos, mesmo protocolo leave-one-specimen-out, mesmo alvo:
+
+| Método | Acurácia |
+| :--- | ---: |
+| Regra de livro (proporção espectral dominante) | 59,5 % |
+| Regra empírica (protótipos ajustados aos dados) | 63,0 % |
+| **Ensemble RF + XGBoost** | **88,7 %** |
+
+Por família:
+
+| Família | Regra de livro | Regra empírica | Modelo |
+| :--- | ---: | ---: | ---: |
+| Rolamento | 55,6 % | 65,8 % | **100 %** |
+| Desalinhamento | **19,5 %** | 77,6 % | 66,7 % |
+| Desbalanceamento | 82,3 % | 71,4 % | **98,8 %** |
+| Normal | 70,9 % | 0,0 % | 76,7 % |
+
+### Onde a regra de livro erra
+
+| real \ predito | rolamento | desalin. | normal | desbal. |
+| :--- | ---: | ---: | ---: | ---: |
+| **rolamento** | 600 | 0 | **480** | 0 |
+| **desalinhamento** | 204 | 211 | **651** | 14 |
+| **normal** | 105 | 52 | 383 | 0 |
+| **desbalanceamento** | 61 | 33 | 224 | 1.482 |
+
+O erro mais grave está na primeira linha: **480 janelas de rolamento — 44 % do
+total — classificadas como condição normal**. Falso negativo do defeito mais
+crítico, e justamente o erro que a especificação do projeto define como o mais
+caro.
+
+### Por que a assinatura clássica falha neste dataset
+
+Proporções medianas por família:
+
+| Família | `p_1×` | `p_2×` | `p_HF` |
+| :--- | ---: | ---: | ---: |
+| Rolamento | 0,085 | 0,087 | 4,792 |
+| Desalinhamento | 0,299 | **0,178** | 4,164 |
+| Normal | 0,328 | **0,213** | 2,074 |
+| Desbalanceamento | 0,608 | 0,187 | 2,756 |
+
+A literatura associa desalinhamento a pico em 2× a rotação. Neste dataset o
+`p_2×` do desalinhamento (0,178) é **menor** que o da condição normal (0,213):
+a regra procura no lugar errado, e o desalinhamento se manifesta na alta
+frequência. Daí o recall de 19,5 %.
+
+O desbalanceamento, em contrapartida, segue a teoria — `p_1×` de 0,608 contra
+0,328 do normal — e a regra acerta 82,3 % ali.
+
+### O que isso justifica
+
+O modelo não substitui o analista de vibração; um profissional experiente
+identificaria estes casos. O que o experimento mostra é que:
+
+1. **A assinatura real não coincide com a de manual.** A regra teórica erra
+   quatro em cada cinco casos de desalinhamento; o modelo, que aprendeu onde a
+   energia de fato aparece nesta máquina, acerta dois em três.
+2. **A decisão combina evidências que não se inspecionam a olho** — curtose por
+   canal, energia em quatro bandas, razões entre harmônicos e corrente, 97
+   grandezas ao todo.
+3. **Escala.** Um analista lê um espectro por vez; o sistema classifica toda
+   medição recebida e ordena a fila de inspeção.
+
+Esta comparação responde antecipadamente à objeção mais natural ao trabalho, e
+o faz com medida em vez de argumento.
