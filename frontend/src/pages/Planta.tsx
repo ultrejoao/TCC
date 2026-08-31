@@ -99,6 +99,11 @@ function NoLinha({ linha }: { linha: TreeLine }) {
                     <td style={{ width: 90 }} className="mono faint">
                       {m.max_priority > 0 && `prior. ${m.max_priority.toFixed(0)}`}
                     </td>
+                    <td style={{ width: 60 }}>
+                      <Link to={`/motores/${m.id}`} className="faint">
+                        abrir →
+                      </Link>
+                    </td>
                   </tr>
                 ))}
               </tbody>
