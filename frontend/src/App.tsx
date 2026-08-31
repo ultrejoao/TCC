@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import Layout from "./components/Layout";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 import Alertas from "./pages/Alertas";
+import Cadastro from "./pages/Cadastro";
 import Coleta from "./pages/Coleta";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
@@ -28,6 +29,7 @@ function Rotas() {
         <Route path="/planta" element={<Planta />} />
         <Route path="/alertas" element={<Alertas />} />
         <Route path="/coleta" element={<Coleta />} />
+        <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/motores/:id" element={<Motor />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

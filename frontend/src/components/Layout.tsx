@@ -6,6 +6,7 @@ const ITENS = [
   { para: "/planta", rotulo: "Planta" },
   { para: "/alertas", rotulo: "Alertas" },
   { para: "/coleta", rotulo: "Coletar" },
+  { para: "/cadastro", rotulo: "Cadastro" },
 ];
 
 export default function Layout() {

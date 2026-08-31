@@ -193,11 +193,8 @@ export default function Planta() {
       {!dados || dados.length === 0 ? (
         <Vazio>
           Nenhuma planta cadastrada ainda.
-          <div className="faint" style={{ marginTop: "0.6rem" }}>
-            A estrutura da fábrica é criada pelos endpoints{" "}
-            <span className="mono">/plants</span>,{" "}
-            <span className="mono">/areas</span> e{" "}
-            <span className="mono">/lines</span>.
+          <div style={{ marginTop: "0.6rem" }}>
+            <Link to="/cadastro">Cadastrar estrutura da fábrica</Link>
           </div>
         </Vazio>
       ) : (
