@@ -18,7 +18,7 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.api.v1.routes import auth
+from app.api.v1.routes import auth, measurements, motors
 from app.config import get_settings
 from app.core.errors import (
     CONTENT_TYPE,
@@ -100,6 +100,8 @@ async def rate_limit_handler(request: Request, exc: RateLimitExceeded) -> JSONRe
 
 # --- rotas ------------------------------------------------------------------
 app.include_router(auth.router, prefix=settings.api_v1_prefix)
+app.include_router(motors.router, prefix=settings.api_v1_prefix)
+app.include_router(measurements.router, prefix=settings.api_v1_prefix)
 
 
 @app.get("/health", tags=["infraestrutura"])
