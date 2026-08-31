@@ -9,20 +9,19 @@
 import { useState, type FormEvent } from "react";
 import { ApiError, del, put } from "../api/client";
 import {
+  DESCRICAO_CLASSE,
+  DESCRICAO_FUNDACAO,
+  limiaresTexto,
+  sugerirClasse,
+  type Foundation,
+} from "../api/iso";
+import {
   ROTULO_CRITICIDADE,
   type Criticality,
   type Line,
   type MotorDetail,
 } from "../api/types";
 import { useApi } from "../hooks/useApi";
-
-/** Classe de máquina sugerida pela potência, conforme ISO 10816-1. */
-function classeSugerida(potenciaKw: number): string | null {
-  if (!potenciaKw || potenciaKw <= 0) return null;
-  if (potenciaKw <= 15) return "I";
-  if (potenciaKw <= 75) return "II";
-  return "III";
-}
 
 export default function EditarMotor({
   motor,
@@ -46,6 +45,9 @@ export default function EditarMotor({
   const [rotacao, setRotacao] = useState(motor.rated_rpm?.toString() ?? "");
   const [polos, setPolos] = useState(motor.poles?.toString() ?? "");
   const [classeIso, setClasseIso] = useState(motor.iso_machine_class);
+  const [fundacao, setFundacao] = useState<Foundation | "">(
+    motor.foundation_type ?? "",
+  );
   const [observacoes, setObservacoes] = useState(motor.notes ?? "");
 
   const [salvando, setSalvando] = useState(false);
@@ -68,6 +70,7 @@ export default function EditarMotor({
         rated_rpm: rotacao ? Number(rotacao) : null,
         poles: polos ? Number(polos) : null,
         iso_machine_class: classeIso,
+        foundation_type: fundacao || null,
         notes: observacoes || null,
       });
       aoSalvar();
@@ -90,7 +93,7 @@ export default function EditarMotor({
     }
   }
 
-  const sugerida = potencia ? classeSugerida(Number(potencia)) : null;
+  const sugestao = sugerirClasse(Number(potencia), fundacao || null);
 
   return (
     <section className="cartao" style={{ borderColor: "var(--accent-dim)" }}>
@@ -180,11 +183,32 @@ export default function EditarMotor({
               value={potencia}
               onChange={(e) => {
                 setPotencia(e.target.value);
-                const s = classeSugerida(Number(e.target.value));
-                if (s) setClasseIso(s);
+                const s = sugerirClasse(Number(e.target.value), fundacao || null);
+                if (s.classe) setClasseIso(s.classe);
               }}
             />
           </div>
+          <div className="campo">
+            <label htmlFor="e-fund">Fundação</label>
+            <select
+              id="e-fund"
+              value={fundacao}
+              onChange={(e) => {
+                const f = e.target.value as Foundation | "";
+                setFundacao(f);
+                const s = sugerirClasse(Number(potencia), f || null);
+                if (s.classe) setClasseIso(s.classe);
+              }}
+            >
+              <option value="">não informada</option>
+              {Object.entries(DESCRICAO_FUNDACAO).map(([v, rotulo]) => (
+                <option key={v} value={v}>
+                  {rotulo}
+                </option>
+              ))}
+            </select>
+          </div>
+
           <div className="campo">
             <label htmlFor="e-rot">Rotação (rpm)</label>
             <input
@@ -212,18 +236,21 @@ export default function EditarMotor({
               value={classeIso}
               onChange={(e) => setClasseIso(e.target.value)}
             >
-              <option value="I">I — até 15 kW</option>
-              <option value="II">II — 15 a 75 kW</option>
-              <option value="III">III — grande, base rígida</option>
-              <option value="IV">IV — grande, base flexível</option>
+              {Object.entries(DESCRICAO_CLASSE).map(([c, rotulo]) => (
+                <option key={c} value={c}>
+                  {rotulo}
+                </option>
+              ))}
             </select>
-            {sugerida && sugerida !== classeIso && (
+            <div className="faint" style={{ marginTop: "0.3rem" }}>
+              {limiaresTexto(classeIso)}
+            </div>
+            {sugestao.motivo && sugestao.classe !== classeIso && (
               <div
                 className="faint"
                 style={{ marginTop: "0.3rem", color: "var(--warning)" }}
               >
-                Para {potencia} kW a norma sugere a classe {sugerida}. Ela define
-                os limiares de severidade.
+                {sugestao.motivo}
               </div>
             )}
           </div>

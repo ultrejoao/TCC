@@ -30,6 +30,9 @@ class MotorBase(BaseModel):
 
     iso_machine_class: str = Field(default="I", pattern="^(I|II|III|IV)$",
                                    description="classe de maquina da ISO 10816-1")
+    foundation_type: str | None = Field(
+        default=None, pattern="^(RIGID|FLEXIBLE)$",
+        description="rigidez da fundacao; distingue as classes III e IV")
     notes: str | None = Field(default=None, max_length=4000)
 
     @field_validator("tag")
@@ -66,6 +69,7 @@ class MotorUpdate(BaseModel):
     rated_current_a: float | None = Field(default=None, gt=0, le=10_000)
     rated_voltage_v: float | None = Field(default=None, gt=0, le=50_000)
     iso_machine_class: str | None = Field(default=None, pattern="^(I|II|III|IV)$")
+    foundation_type: str | None = Field(default=None, pattern="^(RIGID|FLEXIBLE)$")
     notes: str | None = Field(default=None, max_length=4000)
     baseline_measurement_id: uuid.UUID | None = None
 
@@ -86,6 +90,7 @@ class MotorOut(BaseModel):
     rated_current_a: float | None
     rated_voltage_v: float | None
     iso_machine_class: str
+    foundation_type: str | None
     baseline_measurement_id: uuid.UUID | None
     notes: str | None
     created_at: datetime

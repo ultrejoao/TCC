@@ -97,6 +97,7 @@ export interface Motor {
   rated_rpm: number | null;
   poles: number | null;
   iso_machine_class: string;
+  foundation_type: "RIGID" | "FLEXIBLE" | null;
   baseline_measurement_id: string | null;
   notes: string | null;
   created_at: string;

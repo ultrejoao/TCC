@@ -11,6 +11,13 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ApiError, post } from "../api/client";
 import {
+  DESCRICAO_CLASSE,
+  DESCRICAO_FUNDACAO,
+  limiaresTexto,
+  sugerirClasse,
+  type Foundation,
+} from "../api/iso";
+import {
   ROTULO_CRITICIDADE,
   type Criticality,
   type TreeArea,
@@ -26,21 +33,6 @@ type Formulario =
   | { tipo: "linha"; areaId: string; areaNome: string }
   | { tipo: "motor"; linhaId: string; linhaNome: string }
   | null;
-
-/**
- * Classe de maquina sugerida pela potencia, conforme a ISO 10816-1.
- *
- * A classe define os limiares das zonas A/B/C/D e, por consequencia, quando um
- * alerta normativo dispara. Cadastrar a classe errada distorce o diagnostico
- * sem que nada denuncie o engano, entao vale sugerir a partir da potencia.
- */
-function classeSugerida(potenciaKw: number): string | null {
-  if (!potenciaKw || potenciaKw <= 0) return null;
-  if (potenciaKw <= 15) return "I";
-  if (potenciaKw <= 75) return "II";
-  return "III";
-}
-
 
 function BotaoAdicionar({
   onClick,
@@ -76,6 +68,7 @@ export default function Cadastro() {
   const [rotacao, setRotacao] = useState("");
   const [polos, setPolos] = useState("2");
   const [classeIso, setClasseIso] = useState("I");
+  const [fundacao, setFundacao] = useState<Foundation | "">("");
 
   function abrir(f: Formulario) {
     setForm(f);
@@ -89,6 +82,7 @@ export default function Cadastro() {
     setRotacao("");
     setPolos("2");
     setClasseIso("I");
+    setFundacao("");
   }
 
   async function salvar(e: React.FormEvent) {
@@ -114,6 +108,7 @@ export default function Cadastro() {
           rated_rpm: rotacao ? Number(rotacao) : null,
           poles: polos ? Number(polos) : null,
           iso_machine_class: classeIso,
+          foundation_type: fundacao || null,
         });
       }
       setForm(null);
@@ -219,11 +214,32 @@ export default function Cadastro() {
                       value={potencia}
                       onChange={(e) => {
                         setPotencia(e.target.value);
-                        const sugerida = classeSugerida(Number(e.target.value));
-                        if (sugerida) setClasseIso(sugerida);
+                        const s = sugerirClasse(Number(e.target.value), fundacao || null);
+                        if (s.classe) setClasseIso(s.classe);
                       }}
                     />
                   </div>
+                  <div className="campo">
+                    <label htmlFor="fund">Fundação</label>
+                    <select
+                      id="fund"
+                      value={fundacao}
+                      onChange={(e) => {
+                        const f = e.target.value as Foundation | "";
+                        setFundacao(f);
+                        const s = sugerirClasse(Number(potencia), f || null);
+                        if (s.classe) setClasseIso(s.classe);
+                      }}
+                    >
+                      <option value="">não informada</option>
+                      {Object.entries(DESCRICAO_FUNDACAO).map(([v, rotulo]) => (
+                        <option key={v} value={v}>
+                          {rotulo}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
                   <div className="campo">
                     <label htmlFor="rot">Rotação (rpm)</label>
                     <input
@@ -251,18 +267,23 @@ export default function Cadastro() {
                       value={classeIso}
                       onChange={(e) => setClasseIso(e.target.value)}
                     >
-                      <option value="I">I — até 15 kW</option>
-                      <option value="II">II — 15 a 75 kW</option>
-                      <option value="III">III — grande, base rígida</option>
-                      <option value="IV">IV — grande, base flexível</option>
+                      {Object.entries(DESCRICAO_CLASSE).map(([c, rotulo]) => (
+                        <option key={c} value={c}>
+                          {rotulo}
+                        </option>
+                      ))}
                     </select>
-                    {potencia && classeSugerida(Number(potencia)) !== classeIso && (
-                      <div className="faint" style={{ marginTop: "0.3rem", color: "var(--warning)" }}>
-                        Para {potencia} kW a norma sugere a classe{" "}
-                        {classeSugerida(Number(potencia))}. A classe define os
-                        limiares de alerta.
-                      </div>
-                    )}
+                    <div className="faint" style={{ marginTop: "0.3rem" }}>
+                      {limiaresTexto(classeIso)}
+                    </div>
+                    {(() => {
+                      const s = sugerirClasse(Number(potencia), fundacao || null);
+                      return s.motivo && s.classe !== classeIso ? (
+                        <div className="faint" style={{ marginTop: "0.3rem", color: "var(--warning)" }}>
+                          {s.motivo}
+                        </div>
+                      ) : null;
+                    })()}
                   </div>
                 </div>
               </>

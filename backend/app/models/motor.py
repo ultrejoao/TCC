@@ -26,6 +26,8 @@ class Motor(Base, TimestampMixin):
     __table_args__ = (
         UniqueConstraint("tag", name="uq_motors_tag"),
         CheckConstraint("criticality IN ('A','B','C')", name="ck_motors_criticality"),
+        CheckConstraint("foundation_type IS NULL OR foundation_type IN ('RIGID','FLEXIBLE')",
+                        name="ck_motors_foundation"),
     )
 
     id: Mapped[uuid.UUID] = uuid_pk()
@@ -48,8 +50,15 @@ class Motor(Base, TimestampMixin):
     rated_current_a: Mapped[float | None] = mapped_column(Float)
     rated_voltage_v: Mapped[float | None] = mapped_column(Float)
 
-    # classe de maquina da ISO 10816-1, define os limiares de zona A/B/C/D
+    # Classe de maquina da ISO 10816-1: define os limiares das zonas A/B/C/D e,
+    # por consequencia, quando um alerta normativo dispara.
     iso_machine_class: Mapped[str] = mapped_column(String(4), nullable=False, default="I")
+
+    # Tipo de fundacao. A norma NAO separa as classes III e IV por potencia, e
+    # sim pela rigidez da fundacao na direcao de medicao: maquina grande em base
+    # rigida e classe III; em base flexivel, classe IV. Sem esta informacao a
+    # classe de uma maquina grande nao pode ser determinada.
+    foundation_type: Mapped[str | None] = mapped_column(String(10))
 
     # Baseline OPCIONAL: medicao marcada pelo tecnico como referencia saudavel.
     # Quando ausente, o sistema opera so com o modelo e os indicadores absolutos.
