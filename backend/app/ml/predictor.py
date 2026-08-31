@@ -30,7 +30,8 @@ if str(ML_ROOT) not in sys.path:
     sys.path.insert(0, str(ML_ROOT))
 
 from kaist.decision import decide  # noqa: E402
-from kaist.severity import compare_to_baseline, iso_zone  # noqa: E402
+from kaist import physical_severity  # noqa: E402
+from kaist.severity import compare_to_baseline  # noqa: E402
 from signals.pipeline import (  # noqa: E402
     PROFILES,
     aggregate_windows,
@@ -48,11 +49,33 @@ class ModelNotAvailable(RuntimeError):
 
 @dataclass
 class PredictionResult:
+    """Saida do diagnostico.
+
+    A SEVERIDADE vem da avaliacao fisica (ISO 10816), nao do modelo. O rotulo de
+    severidade do dataset e uma convencao administrativa sem correspondencia
+    monotonica com o sinal, e treinar sobre ele deu recall de 0,0% para WARNING
+    em especimes ineditos. O ML responde o TIPO de falha, que e o que ele
+    demonstrou fazer bem (88,7% no protocolo estrito, rolamento em 100%).
+
+    `ml_severity` e mantida como resultado do experimento preliminar, para
+    comparacao — nao alimenta alertas nem decisao.
+    """
+
     profile: str
     model_version: str
 
+    # severidade por criterio fisico — saida primaria
     severity: str
-    severity_probabilities: dict[str, float]
+    severity_criterion: str
+    severity_explanation: str
+    iso_zone: str
+    v_rms_mms: float
+    ratio_to_baseline: float | None
+
+    # severidade prevista pelo modelo — experimento preliminar, informativa
+    ml_severity: str
+    ml_severity_probabilities: dict[str, float]
+
     fault_type: str
     fault_type_probabilities: dict[str, float]
 
@@ -63,7 +86,6 @@ class PredictionResult:
 
     features: dict[str, float]
     indicators: dict[str, float]
-    iso_zone: str
     top_factors: list[dict[str, Any]] = field(default_factory=list)
     baseline_comparison: dict[str, float] | None = None
     n_windows: int = 0
@@ -143,24 +165,36 @@ class Predictor:
 
         X = np.array([[features[c] for c in colunas]], dtype=np.float32)
 
-        severidade, probs_sev = self._run_target(bundle, "severity", X)
+        ml_sev, probs_sev = self._run_target(bundle, "severity", X)
         tipo, probs_tipo = self._run_target(bundle, "fault_type", X)
 
         indicadores = {k: float(features[k]) for k in INDICATORS if k in features}
-        decisao = decide(tipo, probs_tipo[tipo], severidade, probs_sev[severidade],
+
+        # SEVERIDADE POR CRITERIO FISICO — independente do modelo
+        fisica = physical_severity.evaluate(
+            indicadores, machine_class=machine_class,
+            baseline=baseline, fault_type=tipo)
+
+        # a matriz de decisao cruza o TIPO previsto com a assinatura fisica
+        decisao = decide(tipo, probs_tipo[tipo], fisica.severity, probs_tipo[tipo],
                          indicadores, bundle["physical_signature"])
 
         return PredictionResult(
             profile=escolhido,
             model_version=f"{escolhido}_{bundle['version']}",
-            severity=severidade, severity_probabilities=probs_sev,
+            severity=fisica.severity,
+            severity_criterion=str(fisica.criterion),
+            severity_explanation=fisica.explanation,
+            iso_zone=fisica.iso_zone,
+            v_rms_mms=fisica.v_rms_mms,
+            ratio_to_baseline=fisica.ratio_to_baseline,
+            ml_severity=ml_sev, ml_severity_probabilities=probs_sev,
             fault_type=tipo, fault_type_probabilities=probs_tipo,
             physical_type=decisao.physical_type,
             evidence_agreement=decisao.agreement,
             confidence=decisao.confidence,
             recommendation=decisao.recommendation,
             features=features, indicators=indicadores,
-            iso_zone=iso_zone(indicadores.get("iso_v_rms_mms", 0.0), machine_class),
             top_factors=self._top_factors(bundle, "fault_type", X, colunas),
             baseline_comparison=compare_to_baseline(indicadores, baseline),
             n_windows=len(janelas),

@@ -124,7 +124,13 @@ export interface TopFactor {
 
 export interface Prediction {
   id: string;
+  /** Severidade por critério físico (ISO 10816) — saída primária. */
   severity: Severity;
+  severity_criterion: string | null;
+  severity_explanation: string | null;
+  ratio_to_baseline: number | null;
+  /** Severidade prevista pelo modelo — experimento preliminar, informativa. */
+  ml_severity: Severity | null;
   severity_probabilities: Record<string, number>;
   fault_type: FaultType;
   fault_type_probabilities: Record<string, number>;

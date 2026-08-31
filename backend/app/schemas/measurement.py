@@ -55,8 +55,17 @@ class PredictionOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: uuid.UUID
+
+    # severidade por criterio fisico (saida primaria)
     severity: str
+    severity_criterion: str | None
+    severity_explanation: str | None
+    ratio_to_baseline: float | None
+
+    # severidade prevista pelo modelo (experimento preliminar, informativa)
+    ml_severity: str | None
     severity_probabilities: dict
+
     fault_type: str
     fault_type_probabilities: dict
     physical_type: str | None

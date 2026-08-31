@@ -488,3 +488,103 @@ iguala a probabilidade do tipo; quando discorda, a penalidade aparece:
 Os dois últimos casos ilustram o viés conhecido da camada física com
 desbalanceamento — ela o confunde com condição normal — e mostram a penalidade
 agindo de forma graduada, e não como um degrau.
+
+
+## 13. Arquitetura final: o ML diagnostica, a física gradua
+
+### A decisão
+
+A severidade **deixa de ser saída do aprendizado supervisionado**. O modelo
+responde o **tipo de falha**; a **condição vibratória** é calculada por critério
+físico normativo. Os dois resultados são produzidos de forma independente e
+apresentados juntos.
+
+```
+                 MEDIÇÃO
+                    │
+        ┌───────────┴───────────┐
+        ↓                       ↓
+  Features vibração        Indicadores ISO
+   + corrente              (velocidade RMS)
+        ↓                       ↓
+  RF + XGBoost            Critério I ou II
+        ↓                       ↓
+  TIPO DE FALHA             SEVERIDADE
+        └───────────┬───────────┘
+                    ↓
+            CAMADA DE DECISÃO
+                    ↓
+         diagnóstico + confiança
+```
+
+### Por que
+
+O rótulo de severidade do dataset é uma convenção administrativa — "o menor
+nível de cada família é WARNING" — sem correspondência monotônica com o sinal.
+As seções 2 e 12 documentam as evidências: recall de 0,0 % para WARNING em
+espécimes inéditos, FAILURE com amplitude menor que a do motor saudável, e a
+constatação de que o modelo reconhecia *qual montagem era*, não *quanto ela era
+grave*.
+
+Exigir do ML uma resposta que o dataset não fundamenta produziria um número sem
+significado. Atribuindo a severidade ao critério físico, cada componente
+responde o que sabe responder.
+
+### Escolha da grandeza — e por que não é um critério por tipo
+
+Poder-se-ia usar um indicador específico por família (alta frequência para
+rolamento, componente 1× para desbalanceamento). Os dados desaconselham:
+esses indicadores **detectam** bem, mas **graduam** mal.
+
+Correlação de Spearman entre o nível de severidade e cada indicador, dentro de
+cada família:
+
+| Família | v_rms | v_1× | v_2× | a_HF |
+| :--- | ---: | ---: | ---: | ---: |
+| Rolamento | **+0,82** | −0,02 | +0,42 | +0,13 |
+| Desalinhamento | **+0,92** | +0,90 | +0,12 | +0,64 |
+| Desbalanceamento | +0,89 | **+0,94** | +0,05 | +0,12 |
+
+A aceleração em alta frequência identifica rolamento com folga (até 10,6× a
+referência), mas ordena a gravidade mal (+0,13), porque não cresce
+monotonicamente com o tamanho do defeito. A **velocidade RMS** — a grandeza que
+a própria ISO 10816 adota — ordena bem nas três famílias. A norma e os dados
+convergem, e não é preciso inventar critério.
+
+### Os dois critérios da norma
+
+| Critério | Quando se aplica | Comportamento nesta bancada |
+| :--- | :--- | :--- |
+| **I** — magnitude absoluta (zonas A/B/C/D) | sempre | insuficiente: mesmo o defeito de 12,7× fica em zona B |
+| **II** — variação sobre referência | quando há baseline do motor | discrimina bem: 1,0× a 12,7× |
+
+O sistema usa o Critério II quando existe medição de referência, e recai no
+Critério I quando não existe — avisando o usuário de que a avaliação está menos
+sensível.
+
+### Resultado, com referência registrada
+
+| Condição | Tipo (modelo) | Severidade (física) | Razão |
+| :--- | :--- | :--- | ---: |
+| Desbalanceamento 3.318 mg | desbalanceamento 100 % | HEALTHY | 1,4× |
+| Desalinhamento nível 3 | desalinhamento 99,9 % | WARNING | 2,2× |
+| Rolamento 1,0 mm *(reservado)* | rolamento 99,3 % | FAILURE | 7,0× |
+| Rolamento 3,0 mm | rolamento 99,9 % | FAILURE | 12,7× |
+
+A escala física ordena com sentido operacional, o que a escala por tamanho de
+defeito não fazia.
+
+**O desbalanceamento classificado como HEALTHY não passa despercebido:** a
+política de alertas dispara `SALTO_SOBRE_BASELINE`, porque a componente 1×
+subiu 217 % em relação à referência, ainda que a vibração global tenha subido
+apenas 40 %. A severidade global é honesta — aquela condição não é perigosa —
+e a variação específica continua sendo comunicada.
+
+### O que se preserva do experimento anterior
+
+O modelo de severidade continua sendo treinado e sua predição é gravada em
+`ml_severity`, sem alimentar alertas nem decisão. Serve à comparação e à
+narrativa metodológica: tentou-se a classificação supervisionada de severidade,
+mediu-se que ela não generaliza para espécimes inéditos, investigou-se o reforço
+com indicadores normativos, e a decisão de retirá-la da saída primária é
+consequência dessas medições — não uma limitação contornada em silêncio.

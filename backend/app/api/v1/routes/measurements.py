@@ -276,14 +276,20 @@ async def criar_medicao(
 
     predicao = Prediction(
         measurement_id=medicao.id, ml_model_id=modelo.id,
+        # severidade por criterio fisico (primaria)
         severity=resultado.severity,
-        severity_probabilities=resultado.severity_probabilities,
+        severity_criterion=resultado.severity_criterion,
+        severity_explanation=resultado.severity_explanation,
+        ratio_to_baseline=resultado.ratio_to_baseline,
+        # severidade do modelo (experimento preliminar, informativa)
+        ml_severity=resultado.ml_severity,
+        severity_probabilities=resultado.ml_severity_probabilities,
         fault_type=resultado.fault_type,
         fault_type_probabilities=resultado.fault_type_probabilities,
         physical_type=resultado.physical_type,
         evidence_agreement=resultado.evidence_agreement,
         confidence=resultado.confidence,
-        recommendation=resultado.recommendation,
+        recommendation=f"{resultado.recommendation} {resultado.severity_explanation}",
         top_factors=resultado.top_factors,
         baseline_comparison=resultado.baseline_comparison,
         inference_ms=resultado.inference_ms,

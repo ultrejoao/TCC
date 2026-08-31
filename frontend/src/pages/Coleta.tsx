@@ -114,31 +114,49 @@ export default function Coleta() {
 
           <h2 style={{ margin: "0.7rem 0 0.2rem" }}>{ROTULO_FALHA[p.fault_type]}</h2>
 
-          {/* As duas probabilidades sao separadas de proposito: elas divergem.
-              Um numero unico ao lado da severidade seria lido como "certeza de
-              que o motor vai falhar", quando pode ser a certeza sobre o tipo. */}
+          {/* Duas origens distintas, exibidas como tais: o modelo responde o
+              TIPO; a severidade vem de critério físico normativo. */}
           <div style={{ margin: "0.8rem 0" }}>
             <div className="faint" style={{ marginBottom: "0.25rem" }}>
-              Probabilidade do tipo — {ROTULO_FALHA[p.fault_type].toLowerCase()}
+              Tipo de falha — identificado pelo modelo
             </div>
             <BarraConfianca
               valor={p.fault_type_probabilities[p.fault_type] ?? p.confidence}
             />
 
             <div className="faint" style={{ margin: "0.6rem 0 0.25rem" }}>
-              Probabilidade da severidade — {p.severity}
-            </div>
-            <BarraConfianca
-              valor={p.severity_probabilities[p.severity] ?? 0}
-            />
-
-            <div className="faint" style={{ margin: "0.6rem 0 0.25rem" }}>
-              Confiança geral
-              <span title="Combina a certeza sobre o tipo com o apoio da assinatura física de vibração.">
-                {" "}ⓘ
-              </span>
+              Confiança no diagnóstico do tipo
             </div>
             <BarraConfianca valor={p.confidence} />
+          </div>
+
+          <div
+            style={{
+              margin: "0.9rem 0",
+              padding: "0.75rem",
+              background: "var(--bg)",
+              borderRadius: "var(--radius-sm)",
+            }}
+          >
+            <div className="linha" style={{ gap: "0.6rem", flexWrap: "wrap" }}>
+              <span className="faint">Severidade por critério físico</span>
+              <SeloSeveridade valor={p.severity} />
+              {p.ratio_to_baseline !== null && (
+                <span className="mono">{p.ratio_to_baseline.toFixed(1)}× a referência</span>
+              )}
+            </div>
+            {p.severity_explanation && (
+              <p className="faint" style={{ margin: "0.4rem 0 0" }}>
+                {p.severity_explanation}
+              </p>
+            )}
+            {p.severity_criterion === "ISO_10816_ZONA" && (
+              <div className="aviso atencao" style={{ marginTop: "0.5rem" }}>
+                Sem medição de referência deste motor, a avaliação usa apenas a
+                magnitude absoluta — critério que subestima degradação incipiente.
+                Registre uma medição de referência para diagnóstico mais sensível.
+              </div>
+            )}
           </div>
 
           <p style={{ margin: "0.6rem 0" }}>{p.recommendation}</p>

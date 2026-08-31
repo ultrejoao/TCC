@@ -110,8 +110,18 @@ class Prediction(Base, TimestampMixin):
         PGUUID(as_uuid=True), ForeignKey("ml_models.id", ondelete="RESTRICT"),
         nullable=False, index=True)
 
+    # SEVERIDADE: vem da avaliacao fisica (ISO 10816), nao do modelo. Ver
+    # ml/kaist/physical_severity.py para a justificativa metodologica.
     severity: Mapped[str] = mapped_column(String(10), nullable=False, index=True)
+    severity_criterion: Mapped[str | None] = mapped_column(String(30))
+    severity_explanation: Mapped[str | None] = mapped_column(Text)
+    ratio_to_baseline: Mapped[float | None] = mapped_column(Float)
+
+    # Severidade prevista pelo MODELO: resultado do experimento preliminar,
+    # guardado para comparacao. Nao alimenta alertas nem decisao.
+    ml_severity: Mapped[str | None] = mapped_column(String(10))
     severity_probabilities: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
+
     fault_type: Mapped[str] = mapped_column(String(20), nullable=False, index=True)
     fault_type_probabilities: Mapped[dict] = mapped_column(JSONB, nullable=False, default=dict)
 

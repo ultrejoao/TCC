@@ -16,10 +16,11 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-tcc}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina POSTGRES_PASSWORD no .env}
       POSTGRES_DB: ${POSTGRES_DB:-tcc_motores}
-    # O banco NAO expoe porta para fora por padrao: quem precisa dele e a API,
-    # na rede interna. Para inspecionar com um cliente externo, descomente.
-    # ports:
-    #   - "5432:5432"
+    # Publicado apenas em 127.0.0.1: acessivel para migrations e inspecao na
+    # maquina de desenvolvimento, inalcancavel pela rede. Em producao, remova
+    # este bloco — quem precisa do banco e a API, pela rede interna.
+    ports:
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
