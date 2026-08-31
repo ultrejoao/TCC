@@ -79,6 +79,24 @@ treinado com tudo.
 
 ---
 
+## Arquivos para testar o sistema
+
+```bash
+python ml/scripts/11_gerar_amostras_demo.py
+```
+
+Gera dez amostras em `ml/data/demo_samples/` — sinais de 5 s, um canal de
+vibração, recortados de **espécimes reservados**, que o modelo nunca viu no
+treino. Diagnosticar um deles mostra o comportamento diante de um defeito
+inédito, e não a memória do treino.
+
+Na tela **Coletar**, envie o arquivo informando taxa de **25600** Hz e a carga
+que consta do nome. Para ativar o critério de severidade mais sensível, envie
+antes `2Nm_Normal.csv` marcado como **medição de referência** — é a condição
+saudável do mesmo motor.
+
+O `README.md` gerado na pasta descreve cada arquivo e o que esperar.
+
 ## O que o sistema faz
 
 Para cada medição, o sistema produz:
