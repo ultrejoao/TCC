@@ -1,4 +1,4 @@
-"""Schemas de setor e motor."""
+"""Schemas de motor."""
 
 import uuid
 from datetime import datetime
@@ -6,25 +6,16 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 
-class SectorCreate(BaseModel):
-    name: str = Field(min_length=2, max_length=120)
-    description: str | None = Field(default=None, max_length=2000)
-
-
-class SectorOut(BaseModel):
-    model_config = ConfigDict(from_attributes=True)
-
-    id: uuid.UUID
-    name: str
-    description: str | None
-    created_at: datetime
-
-
 class MotorBase(BaseModel):
     tag: str = Field(min_length=1, max_length=60,
                      description="identificacao do motor na planta, ex. MT-101")
     name: str = Field(min_length=2, max_length=160)
-    sector_id: uuid.UUID | None = None
+    line_id: uuid.UUID | None = None
+
+    criticality: str = Field(
+        default="B", pattern="^[ABC]$",
+        description="criticidade para a producao: A=parada de linha, "
+                    "B=impacto parcial, C=redundante")
 
     manufacturer: str | None = Field(default=None, max_length=120)
     model: str | None = Field(default=None, max_length=120)
@@ -65,7 +56,8 @@ class MotorUpdate(BaseModel):
     """Atualizacao parcial: apenas os campos enviados sao alterados."""
 
     name: str | None = Field(default=None, min_length=2, max_length=160)
-    sector_id: uuid.UUID | None = None
+    line_id: uuid.UUID | None = None
+    criticality: str | None = Field(default=None, pattern="^[ABC]$")
     manufacturer: str | None = Field(default=None, max_length=120)
     model: str | None = Field(default=None, max_length=120)
     power_kw: float | None = Field(default=None, gt=0, le=10_000)
@@ -84,7 +76,8 @@ class MotorOut(BaseModel):
     id: uuid.UUID
     tag: str
     name: str
-    sector_id: uuid.UUID | None
+    line_id: uuid.UUID | None
+    criticality: str
     manufacturer: str | None
     model: str | None
     power_kw: float | None
@@ -102,10 +95,13 @@ class MotorOut(BaseModel):
 class MotorDetail(MotorOut):
     """Motor com o resumo de condicao usado no dashboard."""
 
-    sector_name: str | None = None
+    line_name: str | None = None
+    area_name: str | None = None
+    plant_name: str | None = None
     measurement_count: int = 0
     last_measurement_at: datetime | None = None
     last_severity: str | None = None
     last_fault_type: str | None = None
     open_alerts: int = 0
+    max_priority: float = 0.0
     has_baseline: bool = False

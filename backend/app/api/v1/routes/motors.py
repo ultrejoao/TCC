@@ -1,4 +1,4 @@
-"""CRUD de motores e setores.
+"""CRUD de motores.
 
 A exclusao e SOFT: o motor sai do cadastro ativo mas o historico de medicoes e
 previsoes permanece, tanto para auditoria quanto para a rastreabilidade exigida
@@ -18,19 +18,25 @@ from app.core.errors import ProblemException
 from app.database import get_db
 from app.models.alert import Alert
 from app.models.measurement import Measurement, Prediction
-from app.models.motor import Motor, Sector
+from app.models.hierarchy import Area, Line, Plant
+from app.models.motor import Motor
 from app.schemas.common import Page
-from app.schemas.motor import (
-    MotorCreate,
-    MotorDetail,
-    MotorOut,
-    MotorUpdate,
-    SectorCreate,
-    SectorOut,
-)
+from app.schemas.motor import MotorCreate, MotorDetail, MotorOut, MotorUpdate
 
 router = APIRouter(tags=["motores"])
 DbSession = Annotated[Session, Depends(get_db)]
+
+
+def _preencher_caminho(detalhe: MotorDetail, motor: Motor) -> None:
+    """Completa linha, area e planta a que o motor pertence."""
+    linha = motor.line
+    if linha is None:
+        return
+    detalhe.line_name = linha.name
+    if linha.area:
+        detalhe.area_name = linha.area.name
+        if linha.area.plant:
+            detalhe.plant_name = linha.area.plant.name
 
 
 def _motor_ativo(db: Session, motor_id: uuid.UUID) -> Motor:
@@ -41,42 +47,20 @@ def _motor_ativo(db: Session, motor_id: uuid.UUID) -> Motor:
     return motor
 
 
-# ---------------------------------------------------------------- setores ---
-@router.get("/sectors", response_model=list[SectorOut])
-def listar_setores(db: DbSession, user: CurrentUser) -> list[Sector]:
-    return list(db.scalars(select(Sector).order_by(Sector.name)))
-
-
-@router.post("/sectors", response_model=SectorOut, status_code=status.HTTP_201_CREATED,
-             dependencies=[Depends(require_csrf)])
-def criar_setor(payload: SectorCreate, request: Request, db: DbSession,
-                user: CurrentUser) -> Sector:
-    if db.scalar(select(Sector).where(Sector.name == payload.name)):
-        raise ProblemException(status.HTTP_409_CONFLICT, "Conflito",
-                               f"Ja existe um setor chamado '{payload.name}'.")
-    setor = Sector(**payload.model_dump())
-    db.add(setor)
-    db.flush()
-    audit(db, request, user, "sector_created", "sectors", setor.id, name=setor.name)
-    db.commit()
-    db.refresh(setor)
-    return setor
-
-
 # ----------------------------------------------------------------- motores ---
 @router.get("/motors", response_model=Page[MotorDetail])
 def listar_motores(
     db: DbSession, user: CurrentUser,
     limit: Annotated[int, Query(ge=1, le=200)] = 50,
     offset: Annotated[int, Query(ge=0)] = 0,
-    sector_id: uuid.UUID | None = None,
+    line_id: uuid.UUID | None = None,
     search: str | None = None,
     severity: str | None = Query(default=None, pattern="^(HEALTHY|WARNING|FAILURE)$"),
 ) -> Page[MotorDetail]:
     """Lista motores ativos com o resumo de condicao de cada um."""
     condicoes = [Motor.deleted_at.is_(None)]
-    if sector_id:
-        condicoes.append(Motor.sector_id == sector_id)
+    if line_id:
+        condicoes.append(Motor.line_id == line_id)
     if search:
         termo = f"%{search.strip()}%"
         condicoes.append(Motor.tag.ilike(termo) | Motor.name.ilike(termo))
@@ -97,7 +81,7 @@ def listar_motores(
             continue
 
         detalhe = MotorDetail.model_validate(motor)
-        detalhe.sector_name = motor.sector.name if motor.sector else None
+        _preencher_caminho(detalhe, motor)
         detalhe.measurement_count = db.scalar(
             select(func.count()).select_from(Measurement)
             .where(Measurement.motor_id == motor.id)) or 0
@@ -107,6 +91,9 @@ def listar_motores(
         detalhe.open_alerts = db.scalar(
             select(func.count()).select_from(Alert)
             .where(Alert.motor_id == motor.id, Alert.status == "OPEN")) or 0
+        detalhe.max_priority = float(db.scalar(
+            select(func.max(Alert.priority_score))
+            .where(Alert.motor_id == motor.id, Alert.status == "OPEN")) or 0.0)
         detalhe.has_baseline = motor.baseline_measurement_id is not None
         itens.append(detalhe)
 
@@ -128,9 +115,11 @@ def criar_motor(payload: MotorCreate, request: Request, db: DbSession,
             f"A tag '{payload.tag}' pertence a um motor removido. "
             f"Restaure-o ou use outra tag.")
 
-    if payload.sector_id and db.get(Sector, payload.sector_id) is None:
-        raise ProblemException(status.HTTP_404_NOT_FOUND, "Recurso nao encontrado",
-                               "Setor informado nao existe.")
+    if payload.line_id:
+        linha = db.get(Line, payload.line_id)
+        if linha is None or linha.deleted_at is not None:
+            raise ProblemException(status.HTTP_404_NOT_FOUND, "Recurso nao encontrado",
+                                   "Linha informada nao existe.")
 
     motor = Motor(**payload.model_dump())
     db.add(motor)
@@ -150,7 +139,7 @@ def obter_motor(motor_id: uuid.UUID, db: DbSession, user: CurrentUser) -> MotorD
     pred = ultima.prediction if ultima else None
 
     detalhe = MotorDetail.model_validate(motor)
-    detalhe.sector_name = motor.sector.name if motor.sector else None
+    _preencher_caminho(detalhe, motor)
     detalhe.measurement_count = db.scalar(
         select(func.count()).select_from(Measurement)
         .where(Measurement.motor_id == motor.id)) or 0
@@ -160,6 +149,9 @@ def obter_motor(motor_id: uuid.UUID, db: DbSession, user: CurrentUser) -> MotorD
     detalhe.open_alerts = db.scalar(
         select(func.count()).select_from(Alert)
         .where(Alert.motor_id == motor.id, Alert.status == "OPEN")) or 0
+    detalhe.max_priority = float(db.scalar(
+        select(func.max(Alert.priority_score))
+        .where(Alert.motor_id == motor.id, Alert.status == "OPEN")) or 0.0)
     detalhe.has_baseline = motor.baseline_measurement_id is not None
     return detalhe
 
@@ -171,10 +163,11 @@ def atualizar_motor(motor_id: uuid.UUID, payload: MotorUpdate, request: Request,
     motor = _motor_ativo(db, motor_id)
     mudancas = payload.model_dump(exclude_unset=True)
 
-    if "sector_id" in mudancas and mudancas["sector_id"] is not None:
-        if db.get(Sector, mudancas["sector_id"]) is None:
+    if mudancas.get("line_id") is not None:
+        linha = db.get(Line, mudancas["line_id"])
+        if linha is None or linha.deleted_at is not None:
             raise ProblemException(status.HTTP_404_NOT_FOUND, "Recurso nao encontrado",
-                                   "Setor informado nao existe.")
+                                   "Linha informada nao existe.")
 
     # a medicao de referencia precisa ser deste motor
     if mudancas.get("baseline_measurement_id"):

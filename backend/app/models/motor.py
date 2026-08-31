@@ -3,22 +3,15 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import (
+    CheckConstraint, DateTime, Float, ForeignKey, Integer, String, Text,
+    UniqueConstraint,
+)
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
 from app.models.base import TimestampMixin, uuid_pk
-
-
-class Sector(Base, TimestampMixin):
-    __tablename__ = "sectors"
-
-    id: Mapped[uuid.UUID] = uuid_pk()
-    name: Mapped[str] = mapped_column(String(120), unique=True, nullable=False)
-    description: Mapped[str | None] = mapped_column(Text)
-
-    motors: Mapped[list["Motor"]] = relationship(back_populates="sector")
 
 
 class Motor(Base, TimestampMixin):
@@ -30,13 +23,21 @@ class Motor(Base, TimestampMixin):
     """
 
     __tablename__ = "motors"
-    __table_args__ = (UniqueConstraint("tag", name="uq_motors_tag"),)
+    __table_args__ = (
+        UniqueConstraint("tag", name="uq_motors_tag"),
+        CheckConstraint("criticality IN ('A','B','C')", name="ck_motors_criticality"),
+    )
 
     id: Mapped[uuid.UUID] = uuid_pk()
     tag: Mapped[str] = mapped_column(String(60), nullable=False, index=True)
     name: Mapped[str] = mapped_column(String(160), nullable=False)
-    sector_id: Mapped[uuid.UUID | None] = mapped_column(
-        PGUUID(as_uuid=True), ForeignKey("sectors.id", ondelete="SET NULL"), index=True)
+    line_id: Mapped[uuid.UUID | None] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("lines.id", ondelete="SET NULL"), index=True)
+
+    # Criticidade para a producao, cadastrada pela manutencao. Pondera o score
+    # de prioridade: uma falha identica pesa mais num motor que para a linha.
+    #   A = parada de linha | B = impacto parcial | C = redundante
+    criticality: Mapped[str] = mapped_column(String(1), nullable=False, default="B")
 
     # dados de placa — usados na validacao de faixa e na classe ISO
     manufacturer: Mapped[str | None] = mapped_column(String(120))
@@ -60,7 +61,8 @@ class Motor(Base, TimestampMixin):
     notes: Mapped[str | None] = mapped_column(Text)
     deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), index=True)
 
-    sector: Mapped["Sector | None"] = relationship(back_populates="motors")
+    line: Mapped["Line | None"] = relationship(  # noqa: F821
+        back_populates="motors", foreign_keys=[line_id])
     measurements: Mapped[list["Measurement"]] = relationship(  # noqa: F821
         back_populates="motor", foreign_keys="Measurement.motor_id")
     baseline_measurement: Mapped["Measurement | None"] = relationship(  # noqa: F821

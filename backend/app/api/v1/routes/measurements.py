@@ -18,6 +18,7 @@ from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from app.config import get_settings
+from app.core import alert_policy
 from app.core.deps import CurrentUser, audit, require_csrf
 from app.core.errors import ProblemException
 from app.database import get_db
@@ -91,30 +92,65 @@ def _modelo_registrado(db: Session, versao: str) -> MLModel:
     return modelo
 
 
-def _abrir_alerta(db: Session, motor: Motor, pred: Prediction) -> Alert | None:
-    """HEALTHY nao gera alerta; WARNING recomenda inspecao; FAILURE, intervencao.
+def _abrir_alerta(db: Session, motor: Motor, pred: Prediction,
+                  medicao: Measurement, modelo_id, anterior: dict | None) -> Alert | None:
+    """Aplica a politica de alertas (app/core/alert_policy.py).
 
-    Divergencia entre modelo e evidencia fisica tambem abre alerta, mesmo com
-    severidade baixa: e o caso em que a confianca no diagnostico e menor.
+    Toda a decisao — se alerta, com que severidade e com que prioridade — vem da
+    politica, que grava a REGRA que disparou. Nenhuma condicao fica implicita
+    aqui dentro.
     """
-    if pred.severity == "FAILURE":
-        mensagem = (f"Falha provavel em {motor.tag}: {pred.fault_type}. "
-                    f"{pred.recommendation}")
-        severidade = "FAILURE"
-    elif pred.severity == "WARNING":
-        mensagem = (f"Degradacao incipiente em {motor.tag}: {pred.fault_type}. "
-                    f"{pred.recommendation}")
-        severidade = "WARNING"
-    elif not pred.evidence_agreement:
-        mensagem = (f"Evidencias divergentes em {motor.tag}. {pred.recommendation}")
-        severidade = "WARNING"
-    else:
+    decisao = alert_policy.evaluate(
+        severity=pred.severity,
+        fault_type=pred.fault_type,
+        confidence=pred.confidence,
+        evidence_agreement=pred.evidence_agreement,
+        physical_type=pred.physical_type,
+        iso_zone=medicao.iso_zone,
+        indicators={k: v for k, v in {
+            "iso_v_rms_mms": medicao.iso_v_rms_mms,
+            "iso_v_1x_mms": medicao.iso_v_1x_mms,
+            "iso_v_2x_mms": medicao.iso_v_2x_mms,
+            "iso_a_hf_g": medicao.iso_a_hf_g,
+        }.items() if v is not None},
+        baseline_comparison=pred.baseline_comparison,
+        previous_indicators=anterior,
+        criticality=motor.criticality,
+        motor_tag=motor.tag,
+    )
+    if not decisao.should_alert:
         return None
 
-    alerta = Alert(motor_id=motor.id, prediction_id=pred.id,
-                   severity=severidade, status="OPEN", message=mensagem)
+    alerta = Alert(
+        motor_id=motor.id, prediction_id=pred.id, ml_model_id=modelo_id,
+        severity=decisao.severity, status="OPEN", message=decisao.message,
+        rule=str(decisao.rule), reasons=decisao.reasons,
+        priority_score=decisao.priority_score,
+        fault_type=pred.fault_type, physical_type=pred.physical_type,
+        confidence=pred.confidence, evidence_agreement=pred.evidence_agreement,
+        trend_pct=decisao.trend_pct,
+        indicators={
+            "iso_v_rms_mms": medicao.iso_v_rms_mms,
+            "iso_a_hf_g": medicao.iso_a_hf_g,
+            "iso_zone": medicao.iso_zone,
+        },
+    )
     db.add(alerta)
     return alerta
+
+
+def _indicadores_anteriores(db: Session, motor_id, exceto_id) -> dict | None:
+    """Indicadores da medicao imediatamente anterior, para calculo de tendencia."""
+    anterior = db.scalar(
+        select(Measurement)
+        .where(Measurement.motor_id == motor_id, Measurement.id != exceto_id)
+        .order_by(Measurement.created_at.desc()).limit(1))
+    if anterior is None:
+        return None
+    return {k: v for k, v in {
+        "iso_v_rms_mms": anterior.iso_v_rms_mms,
+        "iso_a_hf_g": anterior.iso_a_hf_g,
+    }.items() if v is not None}
 
 
 @router.post("/measurements", response_model=MeasurementWithPrediction,
@@ -258,7 +294,8 @@ async def criar_medicao(
     if ctx.is_baseline:
         motor.baseline_measurement_id = medicao.id
 
-    alerta = _abrir_alerta(db, motor, predicao)
+    anterior = _indicadores_anteriores(db, motor.id, medicao.id)
+    alerta = _abrir_alerta(db, motor, predicao, medicao, modelo.id, anterior)
     db.flush()
 
     audit(db, request, user, "measurement_created", "measurements", medicao.id,

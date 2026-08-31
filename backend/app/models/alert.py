@@ -3,7 +3,10 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Index, String, Text
+from sqlalchemy import (
+    Boolean, CheckConstraint, DateTime, Float, ForeignKey, Index, String, Text,
+)
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -25,6 +28,7 @@ class Alert(Base, TimestampMixin):
     __tablename__ = "alerts"
     __table_args__ = (
         Index("ix_alerts_motor_status", "motor_id", "status"),
+        Index("ix_alerts_status_priority", "status", "priority_score"),
         CheckConstraint(f"status IN {ALERT_STATUS}", name="ck_alerts_status"),
         CheckConstraint(f"severity IN {ALERT_SEVERITIES}", name="ck_alerts_severity"),
     )
@@ -39,6 +43,30 @@ class Alert(Base, TimestampMixin):
     severity: Mapped[str] = mapped_column(String(10), nullable=False, index=True)
     status: Mapped[str] = mapped_column(String(15), nullable=False, default="OPEN", index=True)
     message: Mapped[str] = mapped_column(Text, nullable=False)
+
+    # --- por que este alerta existe ----------------------------------------
+    # A regra que disparou fica gravada: a pergunta "por que este alerta foi
+    # gerado?" precisa ter resposta exata, e nao reconstruida a posteriori.
+    rule: Mapped[str] = mapped_column(String(40), nullable=False, index=True)
+    reasons: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
+
+    # score de prioridade para a fila de inspecao
+    priority_score: Mapped[float] = mapped_column(Float, nullable=False, default=0.0,
+                                                  index=True)
+
+    # snapshot do diagnostico no momento do alerta: o modelo pode ser retreinado
+    # e a previsao reavaliada, mas o alerta guarda o que se sabia quando disparou
+    fault_type: Mapped[str | None] = mapped_column(String(20))
+    physical_type: Mapped[str | None] = mapped_column(String(20))
+    confidence: Mapped[float | None] = mapped_column(Float)
+    evidence_agreement: Mapped[bool | None] = mapped_column(Boolean)
+    trend_pct: Mapped[float | None] = mapped_column(Float)
+    indicators: Mapped[dict | None] = mapped_column(JSONB)
+
+    # rastreabilidade explicita do modelo, sem depender de navegar pela previsao
+    ml_model_id: Mapped[uuid.UUID | None] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("ml_models.id", ondelete="RESTRICT"),
+        index=True)
 
     acknowledged_by_id: Mapped[uuid.UUID | None] = mapped_column(
         PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"))
