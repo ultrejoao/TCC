@@ -1,0 +1,436 @@
+/* Design do sistema.
+   CSS puro com custom properties: sem dependencia extra de build, e as
+   decisoes de cor ficam num lugar so. As cores de severidade seguem a
+   convencao industrial (verde/ambar/vermelho) e foram escolhidas com
+   contraste suficiente para leitura em tela de celular sob luz de fabrica. */
+
+:root {
+  --bg: #0f172a;
+  --bg-elev: #1e293b;
+  --bg-elev-2: #273449;
+  --border: #334155;
+  --text: #e2e8f0;
+  --text-dim: #94a3b8;
+  --text-faint: #64748b;
+
+  --accent: #38bdf8;
+  --accent-dim: #0ea5e9;
+
+  --healthy: #22c55e;
+  --warning: #f59e0b;
+  --failure: #ef4444;
+  --neutral: #64748b;
+
+  --healthy-bg: rgba(34, 197, 94, 0.12);
+  --warning-bg: rgba(245, 158, 11, 0.12);
+  --failure-bg: rgba(239, 68, 68, 0.12);
+
+  --radius: 10px;
+  --radius-sm: 6px;
+  --shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "SF Mono", "Cascadia Code", Consolas, monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+  font-size: 15px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+h1 {
+  font-size: 1.5rem;
+}
+h2 {
+  font-size: 1.15rem;
+}
+h3 {
+  font-size: 0.95rem;
+}
+
+a {
+  color: var(--accent);
+  text-decoration: none;
+}
+a:hover {
+  text-decoration: underline;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.55rem 1rem;
+  background: var(--accent-dim);
+  color: #04121c;
+  font-weight: 600;
+  transition: filter 0.15s;
+}
+button:hover:not(:disabled) {
+  filter: brightness(1.12);
+}
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+button.secundario {
+  background: var(--bg-elev-2);
+  color: var(--text);
+}
+button.perigo {
+  background: var(--failure);
+  color: #fff;
+}
+
+input,
+select,
+textarea {
+  font: inherit;
+  width: 100%;
+  padding: 0.55rem 0.7rem;
+  background: var(--bg);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid var(--accent-dim);
+  outline-offset: -1px;
+}
+
+label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--text-dim);
+  margin-bottom: 0.3rem;
+  font-weight: 500;
+}
+
+.campo {
+  margin-bottom: 0.9rem;
+}
+
+/* --- blocos ------------------------------------------------------------- */
+.cartao {
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.1rem;
+}
+
+.pilha {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.linha {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.grade {
+  display: grid;
+  gap: 1rem;
+}
+
+.mono {
+  font-family: var(--mono);
+  font-size: 0.85em;
+}
+
+.dim {
+  color: var(--text-dim);
+}
+.faint {
+  color: var(--text-faint);
+  font-size: 0.85rem;
+}
+
+/* --- severidade --------------------------------------------------------- */
+.selo {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.2rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+.selo.HEALTHY {
+  background: var(--healthy-bg);
+  color: var(--healthy);
+}
+.selo.WARNING {
+  background: var(--warning-bg);
+  color: var(--warning);
+}
+.selo.FAILURE {
+  background: var(--failure-bg);
+  color: var(--failure);
+}
+.selo.neutro {
+  background: rgba(100, 116, 139, 0.15);
+  color: var(--text-dim);
+}
+
+.ponto {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.ponto.HEALTHY {
+  background: var(--healthy);
+}
+.ponto.WARNING {
+  background: var(--warning);
+}
+.ponto.FAILURE {
+  background: var(--failure);
+}
+.ponto.neutro {
+  background: var(--neutral);
+}
+
+/* --- tabela ------------------------------------------------------------- */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.88rem;
+}
+th {
+  text-align: left;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-faint);
+  font-weight: 600;
+  padding: 0.5rem 0.6rem;
+  border-bottom: 1px solid var(--border);
+}
+td {
+  padding: 0.65rem 0.6rem;
+  border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+}
+tbody tr:hover {
+  background: rgba(255, 255, 255, 0.02);
+}
+
+/* --- avisos ------------------------------------------------------------- */
+.aviso {
+  padding: 0.75rem 0.9rem;
+  border-radius: var(--radius-sm);
+  border-left: 3px solid;
+  font-size: 0.87rem;
+}
+.aviso.erro {
+  background: var(--failure-bg);
+  border-color: var(--failure);
+}
+.aviso.atencao {
+  background: var(--warning-bg);
+  border-color: var(--warning);
+}
+.aviso.ok {
+  background: var(--healthy-bg);
+  border-color: var(--healthy);
+}
+.aviso.info {
+  background: rgba(56, 189, 248, 0.1);
+  border-color: var(--accent);
+}
+
+/* --- carregando --------------------------------------------------------- */
+.esqueleto {
+  background: linear-gradient(
+    90deg,
+    var(--bg-elev) 25%,
+    var(--bg-elev-2) 50%,
+    var(--bg-elev) 75%
+  );
+  background-size: 200% 100%;
+  animation: brilho 1.4s infinite;
+  border-radius: var(--radius-sm);
+  height: 1rem;
+}
+@keyframes brilho {
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.vazio {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: var(--text-faint);
+}
+
+/* --- responsivo -----------------------------------------------------------
+   O tecnico usa o celular em campo, entao a coleta e a leitura de alertas
+   precisam caber numa coluna. Tabelas de muitas colunas viram cartoes: em
+   375px de largura, oito colunas quebram cada celula em varias linhas e o
+   resultado fica ilegivel. */
+
+@media (max-width: 780px) {
+  body {
+    font-size: 14px;
+  }
+
+  h1 {
+    font-size: 1.25rem;
+  }
+
+  /* cabecalho compacto: a navegacao rola na horizontal em vez de quebrar */
+  .cabecalho-conteudo {
+    gap: 0.6rem !important;
+    padding: 0.55rem 0.8rem !important;
+  }
+  .cabecalho-nav {
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .cabecalho-nav::-webkit-scrollbar {
+    display: none;
+  }
+  .so-desktop {
+    display: none !important;
+  }
+
+  .cartao {
+    padding: 0.85rem;
+  }
+
+  /* tabela -> cartoes empilhados */
+  table.responsiva thead {
+    display: none;
+  }
+  table.responsiva,
+  table.responsiva tbody,
+  table.responsiva tr,
+  table.responsiva td {
+    display: block;
+    width: 100%;
+  }
+  table.responsiva tr {
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.7rem;
+    margin-bottom: 0.7rem;
+  }
+  table.responsiva td {
+    border: none;
+    padding: 0.2rem 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.8rem;
+  }
+  /* o rotulo da coluna vira prefixo da celula */
+  table.responsiva td::before {
+    content: attr(data-rotulo);
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-faint);
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  table.responsiva td:empty {
+    display: none;
+  }
+  table.responsiva td[data-rotulo=""]::before {
+    content: none;
+  }
+}
+
+/* alvos de toque confortaveis em telas sensiveis */
+@media (pointer: coarse) {
+  button,
+  select,
+  input[type="checkbox"] {
+    min-height: 42px;
+  }
+  input[type="checkbox"] {
+    min-height: 20px;
+  }
+}
+
+@media (max-width: 780px) {
+  /* Celulas com varias informacoes (tag + nome + regra) empilham a direita,
+     em vez de disputar a largura na horizontal e quebrar cada palavra. */
+  table.responsiva td.bloco {
+    flex-direction: column;
+    align-items: flex-end;
+    text-align: right;
+    gap: 0.15rem;
+  }
+  table.responsiva td.bloco::before {
+    align-self: flex-start;
+    margin-bottom: -1.15rem;
+  }
+  table.responsiva td.bloco > * {
+    max-width: 65%;
+  }
+}
+
+@media (max-width: 780px) {
+  /* Arvore: a indentacao por nivel consome largura demais no celular, e a
+     linha do motor quebra. Reduz-se o recuo e a linha vira bloco. */
+  .arvore-no {
+    margin-left: 0.6rem !important;
+  }
+  table.arvore-motores,
+  table.arvore-motores tbody,
+  table.arvore-motores tr,
+  table.arvore-motores td {
+    display: block;
+    width: 100%;
+  }
+  table.arvore-motores tr {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+  }
+  table.arvore-motores td {
+    width: auto !important;
+    border: none;
+    padding: 0;
+  }
+  table.arvore-motores td:nth-child(2) {
+    width: 100% !important;
+    order: 10;
+  }
+}
