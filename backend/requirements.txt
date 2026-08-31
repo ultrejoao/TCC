@@ -1,0 +1,28 @@
+# API
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+python-multipart==0.0.20
+
+# Banco
+sqlalchemy==2.0.36
+alembic==1.14.0
+psycopg[binary]==3.2.3
+
+# Configuracao
+pydantic==2.10.4
+pydantic-settings==2.7.0
+email-validator==2.2.0
+
+# Seguranca
+argon2-cffi==23.1.0
+pyjwt==2.10.1
+slowapi==0.1.9
+
+# ML (compartilhado com o pipeline em ml/)
+numpy
+scipy
+pandas
+scikit-learn
+xgboost
+joblib
+pyarrow

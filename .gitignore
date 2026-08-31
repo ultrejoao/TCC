@@ -28,3 +28,11 @@ desktop.ini
 
 # Arquivos temporarios do Office/Windows
 ~$*
+
+# Segredos: nunca versionar
+.env
+*.env
+!.env.example
+
+# Arquivos brutos enviados pelos tecnicos
+backend/uploads/
