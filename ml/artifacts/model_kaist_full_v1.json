@@ -5,6 +5,27 @@
     "vibration_channels": 4,
     "current": true
   },
+  "holdout": {
+    "specimens": [
+      "bearing/outer_race/10",
+      "misalignment/shaft/03",
+      "unbalance/rotor/2239"
+    ],
+    "normal_session": "2Nm_Normal",
+    "sessions": [
+      "0Nm_BPFO_10",
+      "0Nm_Misalign_03",
+      "0Nm_Unbalance_2239mg",
+      "2Nm_BPFO_10",
+      "2Nm_Misalign_03",
+      "2Nm_Normal",
+      "2Nm_Unbalance_2239mg",
+      "4Nm_BPFO_10",
+      "4Nm_Misalign_03",
+      "4Nm_Unbalance_2239mg"
+    ],
+    "note": "Especimes reservados: o modelo nunca viu nenhuma medicao destas montagens. A sessao normal e um hold-out mais fraco — o especime saudavel e unico no dataset, entao o modelo viu a mesma montagem sob outras cargas."
+  },
   "description": "4 acelerometros e uma fase de corrente (bancada instrumentada)",
   "feature_columns": [
     "load_nm",
@@ -137,13 +158,13 @@
     "Selecao de features e calibracao da matriz de decisao foram feitas sobre os mesmos folds de avaliacao (otimismo nao quantificado)."
   ],
   "algorithm": "rf_xgb_soft_voting_ensemble",
-  "trained_at": "2026-08-31T16:07:19.742651+00:00",
-  "n_windows": 4500,
+  "trained_at": "2026-08-31T19:25:02.483284+00:00",
+  "n_windows": 3480,
   "n_features": 97,
   "window_seconds": 1.0,
   "dataset": "KAIST (Jung et al., 2023) - 45 sessoes, 15 especimes",
   "artifact_path": "ml/artifacts/model_kaist_full_v1.joblib",
-  "artifact_sha256": "3ff4e7c6c1b92b706fdb36b9c277fa3c1dad67f7b584808ff5c3a184ed06ed37",
+  "artifact_sha256": "0b3618c5d5805067e1f72dd543b9a9985b0f5c1d67007937ff1730013756f83e",
   "hyperparameters": {
     "rf": {
       "n_estimators": 400,

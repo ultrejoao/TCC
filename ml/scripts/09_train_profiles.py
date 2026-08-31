@@ -31,6 +31,12 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from config import ARTIFACTS, DATA_INTERIM  # noqa: E402
 from kaist.decision import PROPORTION_NAMES, PhysicalSignature, physical_proportions  # noqa: E402
 from kaist.features import model_feature_columns  # noqa: E402
+from kaist.loaders import discover_sessions  # noqa: E402
+from kaist.splits import (  # noqa: E402
+    HOLDOUT_NORMAL_SESSION,
+    HOLDOUT_SPECIMENS,
+    holdout_session_ids,
+)
 from signals.pipeline import PROFILE_FULL, PROFILE_SINGLE, PROFILES  # noqa: E402
 
 SEED = 42
@@ -93,14 +99,21 @@ def train_ensemble(X: np.ndarray, y: np.ndarray):
     return rf, xgb
 
 
-def build_profile(profile: str, df: pd.DataFrame, feature_cols: list[str]) -> Path:
+def build_profile(profile: str, df: pd.DataFrame, feature_cols: list[str],
+                  holdout: list[str]) -> Path:
     spec = PROFILES[profile]
     df = df.copy()
     df["fault_type"] = np.where(df.fault_family == "normal", "normal", df.fault_family)
 
+    # As sessoes reservadas saem do treino. Sem isso, qualquer demonstracao
+    # usaria dado ja visto e nao mostraria o comportamento real do modelo.
+    total_antes = len(df)
+    df = df[~df.session_id.isin(holdout)]
+
     X = df[feature_cols].to_numpy(dtype=np.float32)
     print(f"\n=== {profile} ===")
-    print(f"  {X.shape[0]} janelas x {X.shape[1]} features")
+    print(f"  {X.shape[0]} janelas x {X.shape[1]} features "
+          f"({total_antes - len(df)} janelas reservadas para demonstracao)")
 
     bundle = {
         "profile": profile,
@@ -108,6 +121,18 @@ def build_profile(profile: str, df: pd.DataFrame, feature_cols: list[str]) -> Pa
         "requires": {
             "vibration_channels": spec.min_vibration_channels,
             "current": spec.requires_current,
+        },
+        # Fica gravado no artefato o que o modelo NAO viu, para que a afirmacao
+        # "este defeito e inedito" seja verificavel e nao dependa de memoria.
+        "holdout": {
+            "specimens": list(HOLDOUT_SPECIMENS),
+            "normal_session": HOLDOUT_NORMAL_SESSION,
+            "sessions": holdout,
+            "note": (
+                "Especimes reservados: o modelo nunca viu nenhuma medicao "
+                "destas montagens. A sessao normal e um hold-out mais fraco — "
+                "o especime saudavel e unico no dataset, entao o modelo viu a "
+                "mesma montagem sob outras cargas."),
         },
         "description": spec.description,
         "feature_columns": feature_cols,
@@ -167,12 +192,18 @@ def build_profile(profile: str, df: pd.DataFrame, feature_cols: list[str]) -> Pa
 
 
 def main() -> None:
+    holdout = holdout_session_ids(discover_sessions())
+    print(f"hold-out de demonstracao: {len(holdout)} sessoes fora do treino")
+    for sid in holdout:
+        print(f"  {sid}")
+
     completo = pd.read_parquet(DATA_INTERIM / "features_1s.parquet")
-    build_profile(PROFILE_FULL, completo, model_feature_columns(completo.columns))
+    build_profile(PROFILE_FULL, completo,
+                  model_feature_columns(completo.columns), holdout)
 
     single = pd.read_parquet(DATA_INTERIM / "features_single_channel.parquet")
     cols_single = [c for c in single.columns if c.startswith(("vib_", "iso_"))]
-    build_profile(PROFILE_SINGLE, single, cols_single)
+    build_profile(PROFILE_SINGLE, single, cols_single, holdout)
 
     print("\nartefatos em", ARTIFACTS)
 

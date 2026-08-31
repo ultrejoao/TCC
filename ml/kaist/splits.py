@@ -126,3 +126,45 @@ def _validate(folds: list[Fold], sessions: dict) -> None:
     repetidas = {s: n for s, n in seen_in_test.items() if n != 1}
     if repetidas:
         raise AssertionError(f"sessoes testadas mais de uma vez: {repetidas}")
+
+
+# ---------------------------------------------------------------------------
+# Hold-out de demonstracao
+# ---------------------------------------------------------------------------
+#: Especimes PERMANENTEMENTE excluidos do treino do modelo de producao.
+#:
+#: Motivacao: sem isso, qualquer demonstracao usaria dados que o modelo ja viu,
+#: e a pergunta "ele ja conhecia este defeito?" teria como resposta honesta um
+#: "sim" que invalida o que a demonstracao aparenta mostrar. Reservando
+#: especimes inteiros, a demonstracao passa a exibir o comportamento real do
+#: modelo diante de um defeito inedito.
+#:
+#: Escolheu-se um especime de cada familia de falha, de modo que os tres tipos
+#: possam ser demonstrados com dado nunca visto. O custo e 9 das 45 sessoes
+#: (20% do material de treino) — barato diante de poder afirmar, sem ressalva,
+#: que o defeito apresentado e novo para o modelo.
+HOLDOUT_SPECIMENS = (
+    "bearing/outer_race/10",     # rolamento, pista externa 1,0 mm
+    "misalignment/shaft/03",     # desalinhamento, nivel 2
+    "unbalance/rotor/2239",      # desbalanceamento, 2.239 mg
+)
+
+#: Sessao normal reservada para demonstrar a condicao saudavel.
+#:
+#: LIMITACAO IMPORTANTE: existe um unico especime saudavel no dataset, entao
+#: nao ha como reserva-lo por inteiro — sem ele, nao restaria HEALTHY no treino.
+#: O que se reserva e uma SESSAO (uma condicao de carga) desse especime. E um
+#: hold-out mais fraco que o dos especimes de falha: o modelo viu a mesma
+#: montagem sob outras cargas. Deve ser apresentado com essa ressalva.
+HOLDOUT_NORMAL_SESSION = "2Nm_Normal"
+
+
+def is_holdout(meta) -> bool:
+    """Indica se a sessao pertence ao hold-out de demonstracao."""
+    return (meta.specimen_id in HOLDOUT_SPECIMENS
+            or meta.session_id == HOLDOUT_NORMAL_SESSION)
+
+
+def holdout_session_ids(sessions: dict) -> list[str]:
+    """Sessoes reservadas, na ordem em que aparecem no dicionario."""
+    return [sid for sid, sf in sessions.items() if is_holdout(sf.meta)]

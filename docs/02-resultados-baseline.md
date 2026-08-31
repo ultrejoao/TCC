@@ -357,3 +357,62 @@ valor apenas mediante nova calibração.
 Por isso a saída inclui um **score contínuo de confiança**, além da sinalização
 de concordância: a decisão sobre o que fazer com uma medição de baixa confiança
 é operacional, não estatística, e deve permanecer visível ao usuário.
+
+
+## 11. Hold-out de demonstração no modelo de produção
+
+O modelo de produção é treinado com **35 das 45 sessões**. Dez ficam
+permanentemente reservadas.
+
+### Por que abrir mão de 22 % do material de treino
+
+Sem reserva, qualquer demonstração do sistema usaria dados que o modelo já viu,
+e a pergunta *"ele já conhecia este defeito?"* teria como resposta honesta um
+"sim" que esvazia o que a demonstração aparenta mostrar — foi o que ocorreu nos
+primeiros testes da API, com 100 % de confiança em todas as medições.
+
+Reservando espécimes inteiros, qualquer demonstração com eles exibe o
+comportamento real do modelo diante de um defeito inédito, sem ressalva.
+
+### O que foi reservado
+
+| Espécime reservado | Família | Espécimes que permanecem no treino |
+| :--- | :--- | ---: |
+| `bearing/outer_race/10` | rolamento, pista externa | 2 (0,3 e 3,0 mm) |
+| `misalignment/shaft/03` | desalinhamento | 2 (níveis 1 e 3) |
+| `unbalance/rotor/2239` | desbalanceamento | 4 |
+| `2Nm_Normal` (sessão) | condição normal | — |
+
+Cada família de falha mantém ao menos dois espécimes no treino, e a família de
+rolamento de pista interna permanece intacta com três.
+
+> **Ressalva sobre a condição normal.** Existe um único espécime saudável no
+> dataset; reservá-lo por inteiro deixaria o treino sem a classe HEALTHY. O que
+> se reservou foi uma **sessão** (uma condição de carga) desse espécime — um
+> hold-out mais fraco, porque o modelo viu a mesma montagem sob outras cargas.
+> Deve ser apresentado com essa distinção.
+
+A lista de espécimes reservados fica gravada nos metadados do artefato
+(`holdout` em `model_*_v1.json`), de modo que a afirmação "este defeito é
+inédito para o modelo" seja verificável e não dependa de memória.
+
+### Resultado sobre os espécimes reservados
+
+Medições reais enviadas pela API, com 3 s de sinal e um canal de vibração:
+
+| Sessão | Condição real | Tipo previsto | Severidade | Confiança |
+| :--- | :--- | :--- | :--- | ---: |
+| `0Nm_BPFO_10` | rolamento | **rolamento** | FAILURE | 99,3 % |
+| `0Nm_Misalign_03` | desalinhamento | **desalinhamento** | WARNING | 90,4 % |
+| `0Nm_Unbalance_2239mg` | desbalanceamento | **desbalanceamento** | FAILURE | 100 % |
+| `2Nm_Normal` | normal | desalinhamento ✗ | HEALTHY ✓ | 69,0 % |
+
+**Os três tipos de falha foram identificados corretamente em espécimes que o
+modelo nunca viu.** O caso normal errou o tipo — resultado coerente com o
+recall de 77 % dessa classe e com o viés já documentado da camada física, que
+confunde normal com desalinhamento (seção 10). A severidade, porém, saiu
+correta como HEALTHY.
+
+Note-se ainda a diferença de confiança: sobre a sessão de desalinhamento
+reservada o modelo respondeu 90,4 %, enquanto sobre sessões de treino responde
+100 %. Essa distância é o que a reserva torna visível.
