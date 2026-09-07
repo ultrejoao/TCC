@@ -7,6 +7,8 @@ const ITENS = [
   { para: "/alertas", rotulo: "Alertas" },
   { para: "/coleta", rotulo: "Coletar" },
   { para: "/cadastro", rotulo: "Cadastro" },
+  { para: "/modelos", rotulo: "Modelos" },
+  { para: "/auditoria", rotulo: "Auditoria" },
 ];
 
 export default function Layout() {

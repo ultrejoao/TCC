@@ -19,7 +19,7 @@ from pathlib import Path
 import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from config import DATA_RAW, ML_ROOT  # noqa: E402
+from config import ML_ROOT  # noqa: E402
 from kaist.loaders import discover_sessions, load_vibration  # noqa: E402
 from kaist.splits import HOLDOUT_NORMAL_SESSION, HOLDOUT_SPECIMENS  # noqa: E402
 

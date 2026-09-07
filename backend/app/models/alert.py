@@ -1,4 +1,4 @@
-"""Alertas, inspecoes e manutencoes."""
+"""Alertas e inspecoes de campo."""
 
 import uuid
 from datetime import datetime
@@ -8,7 +8,7 @@ from sqlalchemy import (
 )
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.dialects.postgresql import UUID as PGUUID
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import Mapped, mapped_column
 
 from app.database import Base
 from app.models.base import TimestampMixin, uuid_pk
@@ -89,6 +89,14 @@ class Inspection(Base, TimestampMixin):
     alert_id: Mapped[uuid.UUID | None] = mapped_column(
         PGUUID(as_uuid=True), ForeignKey("alerts.id", ondelete="SET NULL"))
 
+    # Qual previsao esta inspecao confirma ou refuta. O vinculo e explicito, e
+    # nao reconstruido depois pela data: uma inspecao de rotina nao tem alerta,
+    # e e justamente ela que mede o acerto em condicao normal — o caso que a
+    # validacao cruzada acerta menos (76 %) e que mais aparece em campo.
+    prediction_id: Mapped[uuid.UUID | None] = mapped_column(
+        PGUUID(as_uuid=True), ForeignKey("predictions.id", ondelete="SET NULL"),
+        index=True)
+
     performed_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, index=True)
     findings: Mapped[str | None] = mapped_column(Text)
@@ -96,23 +104,3 @@ class Inspection(Base, TimestampMixin):
     # confirmacao de campo: permite medir na pratica o acerto do modelo
     confirmed_fault_type: Mapped[str | None] = mapped_column(String(20))
     notes: Mapped[str | None] = mapped_column(Text)
-
-
-class Maintenance(Base, TimestampMixin):
-    """Intervencao executada no motor."""
-
-    __tablename__ = "maintenances"
-
-    id: Mapped[uuid.UUID] = uuid_pk()
-    motor_id: Mapped[uuid.UUID] = mapped_column(
-        PGUUID(as_uuid=True), ForeignKey("motors.id", ondelete="CASCADE"),
-        nullable=False, index=True)
-    user_id: Mapped[uuid.UUID | None] = mapped_column(
-        PGUUID(as_uuid=True), ForeignKey("users.id", ondelete="SET NULL"))
-
-    performed_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), nullable=False, index=True)
-    maintenance_type: Mapped[str] = mapped_column(String(40), nullable=False)
-    description: Mapped[str] = mapped_column(Text, nullable=False)
-    parts_replaced: Mapped[str | None] = mapped_column(Text)
-    downtime_hours: Mapped[float | None] = mapped_column()

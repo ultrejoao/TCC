@@ -105,6 +105,20 @@ class MeasurementOut(BaseModel):
     created_at: datetime
 
 
+class MeasurementListItem(MeasurementOut):
+    """Linha do historico, com o diagnostico resumido.
+
+    O historico mostrava so indicadores ISO — util para a curva, insuficiente
+    para responder "o que foi diagnosticado nesta coleta?". O `prediction_id` e
+    o que permite vincular uma inspecao de campo a previsao que ela confirma.
+    """
+
+    prediction_id: uuid.UUID | None = None
+    fault_type: str | None = None
+    severity: str | None = None
+    inspected: bool = False
+
+
 class MeasurementWithPrediction(MeasurementOut):
     """Resposta do POST /measurements: medicao gravada e diagnostico, juntos."""
 

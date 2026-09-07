@@ -33,7 +33,6 @@ from kaist.decision import decide  # noqa: E402
 from kaist import physical_severity  # noqa: E402
 from kaist.severity import compare_to_baseline  # noqa: E402
 from signals.pipeline import (  # noqa: E402
-    PROFILES,
     aggregate_windows,
     extract_windows,
     select_profile,
@@ -145,6 +144,7 @@ class Predictor:
                 current: RawSignal | None = None, load_nm: float | None = None,
                 baseline: dict[str, float] | None = None,
                 machine_class: str = "I",
+                rot_hz: float | None = None,
                 profile: str | None = None) -> PredictionResult:
         inicio = time.perf_counter()
 
@@ -153,7 +153,8 @@ class Predictor:
 
         janelas = extract_windows(
             signal, escolhido, window_seconds=bundle.get("window_seconds", 1.0),
-            channel=channel, current=current, load_nm=load_nm)
+            channel=channel, current=current, load_nm=load_nm,
+            **({"rot_hz": rot_hz} if rot_hz else {}))
         features = aggregate_windows(janelas)
 
         colunas = bundle["feature_columns"]

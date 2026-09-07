@@ -19,10 +19,19 @@ pyjwt==2.10.1
 slowapi==0.1.9
 
 # ML (compartilhado com o pipeline em ml/)
-numpy
-scipy
-pandas
-scikit-learn
-xgboost
-joblib
-pyarrow
+#
+# VERSOES FIXAS, e nao por preferencia de estilo: o artefato .joblib carrega
+# arvores serializadas pelo scikit-learn. Abrir com uma versao diferente da que
+# treinou emite InconsistentVersionWarning e, nas palavras da propria
+# biblioteca, "pode levar a codigo quebrado ou resultados invalidos" — um
+# diagnostico errado sem erro visivel.
+#
+# Estas sao as versoes que produziram model_kaist_full_v1 e model_field_single_v1.
+# Ao retreinar com outras versoes, atualizar aqui junto.
+numpy==2.4.2
+scipy==1.17.1
+pandas==3.0.1
+scikit-learn==1.8.0
+xgboost==3.4.1
+joblib==1.5.3
+pyarrow==25.0.1

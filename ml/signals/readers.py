@@ -23,7 +23,6 @@ nao ha como calcular frequencia nenhuma, e adivinhar seria pior que recusar.
 from __future__ import annotations
 
 import csv
-import json
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Protocol, runtime_checkable

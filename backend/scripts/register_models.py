@@ -54,20 +54,28 @@ def register(db, meta_path: Path) -> MLModel:
     versao = f"{meta['profile']}_{meta['version']}"
     digest = sha256(artefato)
 
+    # Os metadados sao reescritos mesmo quando o artefato nao mudou: descricao,
+    # limitacoes conhecidas e contexto de avaliacao evoluem sem que o .joblib
+    # seja retreinado, e um registro que so acompanha o binario fica defasado
+    # em silencio. O hash decide a MENSAGEM, nao se ha atualizacao.
     existente = db.scalar(select(MLModel).where(MLModel.version == versao))
     if existente:
-        if existente.artifact_sha256 == digest:
-            print(f"  {versao:22s} ja registrado (hash confere)")
-            return existente
-        print(f"  {versao:22s} artefato MUDOU — atualizando registro")
         alvo = existente
+        if existente.artifact_sha256 == digest:
+            estado = "metadados atualizados (artefato inalterado)"
+        else:
+            estado = "artefato MUDOU — registro atualizado"
     else:
         alvo = MLModel(version=versao)
         db.add(alvo)
+        estado = f"registrado ({meta['n_features']} features)"
 
     alvo.algorithm = meta["algorithm"]
     alvo.hyperparameters = meta["hyperparameters"]
-    alvo.metrics = meta["metrics"]
+    # Os especimes reservados entram junto das metricas por serem parte de
+    # COMO elas foram obtidas: dizem o que o modelo nao viu no treino. Ficam no
+    # mesmo JSONB para nao exigir alteracao de schema.
+    alvo.metrics = {**meta["metrics"], "holdout": meta.get("holdout", {})}
     alvo.feature_columns = meta["feature_columns"]
     alvo.dataset = meta["dataset"]
     alvo.n_windows = meta["n_windows"]
@@ -79,8 +87,7 @@ def register(db, meta_path: Path) -> MLModel:
     alvo.known_limitations = meta["known_limitations"]
     alvo.notes = f"{meta['description']} | {meta['evaluation_note']}"
 
-    if not existente:
-        print(f"  {versao:22s} registrado ({meta['n_features']} features)")
+    print(f"  {versao:22s} {estado}")
     return alvo
 
 

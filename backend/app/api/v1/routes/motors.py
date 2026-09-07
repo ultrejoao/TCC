@@ -17,8 +17,8 @@ from app.core.deps import CurrentUser, audit, require_csrf
 from app.core.errors import ProblemException
 from app.database import get_db
 from app.models.alert import Alert
-from app.models.measurement import Measurement, Prediction
-from app.models.hierarchy import Area, Line, Plant
+from app.models.measurement import Measurement
+from app.models.hierarchy import Line
 from app.models.motor import Motor
 from app.schemas.common import Page
 from app.schemas.motor import MotorCreate, MotorDetail, MotorOut, MotorUpdate

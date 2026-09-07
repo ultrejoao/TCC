@@ -167,6 +167,13 @@ export interface Measurement {
   created_at: string;
 }
 
+export interface MeasurementListItem extends Measurement {
+  prediction_id: string | null;
+  fault_type: FaultType | null;
+  severity: Severity | null;
+  inspected: boolean;
+}
+
 export interface MeasurementWithPrediction extends Measurement {
   prediction: Prediction | null;
   model_version: string | null;
@@ -271,3 +278,116 @@ export const ROTULO_REGRA: Record<string, string> = {
   DEGRADACAO: "Degradação incipiente",
   DEGRADACAO_INCERTA: "Degradação com evidências incertas",
 };
+
+/* --- registro de modelos ------------------------------------------------- */
+
+export interface ModelSummary {
+  version: string;
+  algorithm: string;
+  is_active: boolean;
+  n_features: number | null;
+  n_windows: number | null;
+  trained_at: string | null;
+  dataset: string | null;
+  fault_type_accuracy: number | null;
+  severity_accuracy: number | null;
+  protocol: string | null;
+  prediction_count: number;
+}
+
+export interface ProtocolResult {
+  protocol: string;
+  description: string;
+  fault_type_accuracy: number | null;
+  severity_accuracy: number | null;
+  fault_type_recall: Record<string, number>;
+  severity_recall: Record<string, number>;
+}
+
+export interface ArtifactIntegrity {
+  path: string;
+  expected_sha256: string | null;
+  present: boolean;
+  matches: boolean | null;
+  message: string;
+}
+
+export interface ModelDetail {
+  version: string;
+  algorithm: string;
+  is_active: boolean;
+  description: string | null;
+  dataset: string | null;
+  n_windows: number | null;
+  n_features: number | null;
+  window_seconds: number | null;
+  trained_at: string | null;
+  protocols: ProtocolResult[];
+  known_limitations: string[];
+  hyperparameters: Record<string, unknown>;
+  feature_columns: string[];
+  feature_groups: Record<string, number>;
+  holdout_note: string | null;
+  holdout_specimens: string[];
+  integrity: ArtifactIntegrity;
+  prediction_count: number;
+  last_prediction_at: string | null;
+}
+
+/* --- inspecoes de campo -------------------------------------------------- */
+
+export interface Inspection {
+  id: string;
+  motor_id: string;
+  prediction_id: string | null;
+  alert_id: string | null;
+  performed_at: string;
+  findings: string | null;
+  notes: string | null;
+  confirmed_fault_type: FaultType | null;
+  created_at: string;
+  predicted_fault_type: FaultType | null;
+  predicted_severity: Severity | null;
+  model_version: string | null;
+  agreement: boolean | null;
+}
+
+export interface FieldAccuracyByModel {
+  model_version: string;
+  n_confirmed: number;
+  n_correct: number;
+  accuracy: number | null;
+}
+
+export interface FieldAccuracy {
+  n_inspections: number;
+  n_confirmed: number;
+  n_correct: number;
+  accuracy: number | null;
+  confusion: Record<string, Record<string, number>>;
+  by_model: FieldAccuracyByModel[];
+  caveat: string;
+}
+
+/* --- auditoria ----------------------------------------------------------- */
+
+export interface AuditEntry {
+  id: string;
+  action: string;
+  entity: string | null;
+  entity_id: string | null;
+  detail: Record<string, unknown> | null;
+  ip_address: string | null;
+  created_at: string;
+  user_name: string | null;
+  sensitive: boolean;
+}
+
+export interface AuditSummary {
+  days: number;
+  total: number;
+  by_action: Record<string, number>;
+  sensitive: Record<string, number>;
+  first_event: string | null;
+  last_event: string | null;
+}

@@ -3,8 +3,9 @@ ml/data/raw/
 
 # Dados derivados (regeneraveis pelos scripts)
 ml/data/interim/*.parquet
+ml/data/interim/*.csv
 
-# Modelo serializado (regeneravel por 06_train_production.py)
+# Modelo serializado (regeneravel por ml/scripts/09_train_profiles.py)
 ml/artifacts/*.joblib
 
 # Python

@@ -23,7 +23,8 @@ import {
   ROTULO_FALHA,
   ROTULO_REGRA,
   type Alert,
-  type Measurement,
+  type Inspection,
+  type MeasurementListItem,
   type MotorDetail,
   type Page,
 } from "../api/types";
@@ -39,6 +40,7 @@ import {
   dataHora,
 } from "../components/ui";
 import EditarMotor from "../components/EditarMotor";
+import RegistrarInspecao from "../components/RegistrarInspecao";
 import { useApi } from "../hooks/useApi";
 
 const CORES_GRAFICO = {
@@ -52,11 +54,13 @@ export default function Motor() {
   const navegar = useNavigate();
   const [salvando, setSalvando] = useState(false);
   const [editando, setEditando] = useState(false);
+  const [inspecionando, setInspecionando] = useState<MeasurementListItem | null>(null);
 
   const motor = useApi<MotorDetail>(id ? `/motors/${id}` : null);
-  const medicoes = useApi<Page<Measurement>>(
+  const medicoes = useApi<Page<MeasurementListItem>>(
     id ? `/motors/${id}/measurements?limit=60` : null,
   );
+  const inspecoes = useApi<Inspection[]>(id ? `/inspections?motor_id=${id}` : null);
   const alertas = useApi<Page<Alert>>(
     id ? `/alerts?motor_id=${id}&status=OPEN` : null,
   );
@@ -304,8 +308,9 @@ export default function Motor() {
                   <th>1×</th>
                   <th>a HF</th>
                   <th>Zona</th>
+                  <th>Diagnóstico</th>
                   <th>Carga</th>
-                  <th>Duração</th>
+                  <th>Inspeção</th>
                 </tr>
               </thead>
               <tbody>
@@ -317,8 +322,25 @@ export default function Motor() {
                     <td className="mono">{x.iso_v_1x_mms?.toFixed(4) ?? "—"}</td>
                     <td className="mono">{x.iso_a_hf_g?.toFixed(3) ?? "—"}</td>
                     <td className="mono">{x.iso_zone ?? "—"}</td>
+                    <td>
+                      {x.fault_type ? ROTULO_FALHA[x.fault_type] : "—"}
+                    </td>
                     <td className="mono">{x.load_nm ?? "—"}</td>
-                    <td className="mono faint">{x.duration_s.toFixed(1)}s</td>
+                    <td>
+                      {x.inspected ? (
+                        <span className="faint">confirmada</span>
+                      ) : x.prediction_id ? (
+                        <button
+                          className="secundario"
+                          onClick={() => setInspecionando(x)}
+                          style={{ padding: "0.2rem 0.6rem", fontSize: "0.8rem" }}
+                        >
+                          registrar
+                        </button>
+                      ) : (
+                        <span className="faint">—</span>
+                      )}
+                    </td>
                   </tr>
                 ))}
               </tbody>
@@ -326,6 +348,71 @@ export default function Motor() {
           </div>
         )}
       </section>
+
+      {inspecionando && (
+        <RegistrarInspecao
+          motorId={m.id}
+          predictionId={inspecionando.prediction_id}
+          tipoPrevisto={inspecionando.fault_type}
+          aoCancelar={() => setInspecionando(null)}
+          aoRegistrar={() => {
+            setInspecionando(null);
+            medicoes.recarregar();
+            inspecoes.recarregar();
+          }}
+        />
+      )}
+
+      {/* O laco fechado: o que o sistema diagnosticou contra o que se encontrou
+          ao abrir a maquina. E a unica medida de acerto que nao vem do dataset
+          que treinou o modelo. */}
+      {inspecoes.dados && inspecoes.dados.length > 0 && (
+        <section className="cartao">
+          <h2 style={{ marginBottom: "0.7rem" }}>Inspeções de campo</h2>
+          <div style={{ overflowX: "auto" }}>
+            <table>
+              <thead>
+                <tr>
+                  <th>Inspeção</th>
+                  <th>Diagnosticado</th>
+                  <th>Encontrado</th>
+                  <th>Conferiu</th>
+                  <th>Achados</th>
+                </tr>
+              </thead>
+              <tbody>
+                {inspecoes.dados.map((i) => (
+                  <tr key={i.id}>
+                    <td>{dataHora(i.performed_at)}</td>
+                    <td>
+                      {i.predicted_fault_type ? ROTULO_FALHA[i.predicted_fault_type] : "—"}
+                    </td>
+                    <td>
+                      {i.confirmed_fault_type
+                        ? ROTULO_FALHA[i.confirmed_fault_type]
+                        : "não conclusivo"}
+                    </td>
+                    <td>
+                      {i.agreement == null ? (
+                        <span className="faint">—</span>
+                      ) : (
+                        <span
+                          style={{
+                            color: i.agreement ? "var(--healthy)" : "var(--failure)",
+                          }}
+                        >
+                          {i.agreement ? "sim" : "não"}
+                        </span>
+                      )}
+                    </td>
+                    <td className="faint">{i.findings ?? "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       <section className="cartao">
         <h2 style={{ marginBottom: "0.7rem" }}>Dados de placa</h2>

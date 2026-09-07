@@ -6,7 +6,6 @@ from typing import Annotated
 
 import jwt
 from fastapi import Cookie, Depends, Header, Request, status
-from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.config import get_settings

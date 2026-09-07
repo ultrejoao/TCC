@@ -5,7 +5,6 @@ nivel — o tecnico ve onde esta o problema sem precisar abrir no por no.
 """
 
 import uuid
-from datetime import datetime, timezone
 from typing import Annotated
 
 from fastapi import APIRouter, Depends, Request, status

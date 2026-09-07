@@ -18,7 +18,9 @@ from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from app.api.v1.routes import alerts, auth, hierarchy, measurements, motors
+from app.api.v1.routes import (
+    alerts, audit, auth, hierarchy, inspections, measurements, models, motors,
+)
 from app.config import get_settings
 from app.core.errors import (
     CONTENT_TYPE,
@@ -121,6 +123,9 @@ app.include_router(hierarchy.router, prefix=settings.api_v1_prefix)
 app.include_router(motors.router, prefix=settings.api_v1_prefix)
 app.include_router(alerts.router, prefix=settings.api_v1_prefix)
 app.include_router(measurements.router, prefix=settings.api_v1_prefix)
+app.include_router(models.router, prefix=settings.api_v1_prefix)
+app.include_router(inspections.router, prefix=settings.api_v1_prefix)
+app.include_router(audit.router, prefix=settings.api_v1_prefix)
 
 
 @app.get("/health", tags=["infraestrutura"])

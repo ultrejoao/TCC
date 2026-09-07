@@ -113,8 +113,15 @@ def _spectrum(block: np.ndarray, fs: float) -> tuple[np.ndarray, np.ndarray]:
     return freqs, amp
 
 
-def vibration_features(block: np.ndarray, fs: float) -> dict[str, float]:
-    """Features dos 4 acelerometros para uma janela. `block` em m/s^2, shape (n, 4)."""
+def vibration_features(block: np.ndarray, fs: float,
+                       rot_hz: float = ROTATION_HZ) -> dict[str, float]:
+    """Features dos 4 acelerometros para uma janela. `block` em m/s^2, shape (n, 4).
+
+    `rot_hz` e a rotacao do eixo, que posiciona as bandas de 1x, 2x e 3x. O
+    padrao e a rotacao da bancada KAIST, usada no treino; em campo o valor vem
+    da rotacao do motor medido — buscar 1x a 50,15 Hz num motor de 1.780 rpm
+    mediria ruido, e o erro nao apareceria em lugar nenhum.
+    """
     block_g = block * MS2_TO_G          # analise feita em g
     freqs, amp = _spectrum(block_g, fs)
 
@@ -122,12 +129,12 @@ def vibration_features(block: np.ndarray, fs: float) -> dict[str, float]:
     for i, ch in enumerate(VIBRATION_CHANNELS):
         for k, v in time_domain(block_g[:, i]).items():
             out[f"vib_{ch}_{k}"] = v
-        for k, v in spectral(amp[:, i], freqs).items():
+        for k, v in spectral(amp[:, i], freqs, rot_hz).items():
             out[f"vib_{ch}_{k}"] = v
 
     # indicadores normativos (ISO 10816/20816): entram como features e tambem
     # sao exibidos ao usuario como camada de validacao fisica
-    out.update(normative_indicators(block, fs))
+    out.update(normative_indicators(block, fs, rot_hz))
     return out
 
 

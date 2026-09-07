@@ -41,6 +41,13 @@ from signals.pipeline import PROFILE_FULL, PROFILE_SINGLE, PROFILES  # noqa: E40
 
 SEED = 42
 VERSION = "v1"
+
+#: Duracao da janela de analise. Precisa viajar DENTRO do artefato: o preditor
+#: le `bundle["window_seconds"]` para fatiar o sinal de campo exatamente como no
+#: treino. Antes o valor existia so nos metadados JSON, e o preditor caia num
+#: padrao de 1,0 s — inofensivo enquanto todos os perfis usam 1,0 s, e um erro
+#: silencioso no dia em que um perfil usar outra janela.
+WINDOW_SECONDS = 1.0
 INDICATORS = ["iso_v_rms_mms", "iso_v_1x_mms", "iso_v_2x_mms", "iso_a_hf_g"]
 
 # Metricas obtidas em 04_evaluate.py e 08_single_channel_profile.py,
@@ -140,6 +147,7 @@ def build_profile(profile: str, df: pd.DataFrame, feature_cols: list[str],
         "targets": {},
         "metrics": METRICS[profile],
         "known_limitations": LIMITATIONS[profile],
+        "window_seconds": WINDOW_SECONDS,
     }
 
     for target, col in [("severity", "label"), ("fault_type", "fault_type")]:
@@ -168,7 +176,6 @@ def build_profile(profile: str, df: pd.DataFrame, feature_cols: list[str],
         "trained_at": datetime.now(timezone.utc).isoformat(),
         "n_windows": int(X.shape[0]),
         "n_features": int(X.shape[1]),
-        "window_seconds": 1.0,
         "dataset": "KAIST (Jung et al., 2023) - 45 sessoes, 15 especimes",
         # relativo a raiz do projeto: caminho absoluto nao sobrevive ao container
         "artifact_path": destino.relative_to(ARTIFACTS.parent.parent).as_posix(),

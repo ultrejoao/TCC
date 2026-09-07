@@ -2,10 +2,12 @@ import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import Layout from "./components/Layout";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 import Alertas from "./pages/Alertas";
+import Auditoria from "./pages/Auditoria";
 import Cadastro from "./pages/Cadastro";
 import Coleta from "./pages/Coleta";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
+import Modelos from "./pages/Modelos";
 import Motor from "./pages/Motor";
 import Planta from "./pages/Planta";
 
@@ -30,6 +32,8 @@ function Rotas() {
         <Route path="/alertas" element={<Alertas />} />
         <Route path="/coleta" element={<Coleta />} />
         <Route path="/cadastro" element={<Cadastro />} />
+        <Route path="/modelos" element={<Modelos />} />
+        <Route path="/auditoria" element={<Auditoria />} />
         <Route path="/motores/:id" element={<Motor />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>

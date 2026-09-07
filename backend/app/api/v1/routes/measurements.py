@@ -24,14 +24,14 @@ from app.core.errors import ProblemException
 from app.database import get_db
 from app.ml.predictor import ModelNotAvailable, get_predictor
 from signals.readers import SignalReadError, read_signal  # noqa: E402
-from app.models.alert import Alert
+from app.models.alert import Alert, Inspection
 from app.models.measurement import Measurement, Prediction
 from app.models.ml_model import MLModel
 from app.models.motor import Motor
 from app.schemas.common import Page
 from app.schemas.measurement import (
     MeasurementContext,
-    MeasurementOut,
+    MeasurementListItem,
     MeasurementWithPrediction,
     PredictionOut,
 )
@@ -234,9 +234,14 @@ async def criar_medicao(
                              "iso_a_hf_g") if getattr(ref, k) is not None}
 
     try:
+        # As features de 1x, 2x e 3x so fazem sentido na rotacao do eixo medido.
+        # Prevalece a rotacao informada na coleta (condicao do momento) sobre a
+        # nominal do cadastro. Sem nenhuma das duas, cai no padrao da bancada.
+        rpm = ctx.rpm or motor.rated_rpm
         resultado = get_predictor().predict(
             sinal, channel=ctx.channel, current=sinal_corrente, load_nm=ctx.load_nm,
-            baseline=baseline_ind or None, machine_class=motor.iso_machine_class)
+            baseline=baseline_ind or None, machine_class=motor.iso_machine_class,
+            rot_hz=(rpm / 60.0) if rpm else None)
     except ModelNotAvailable as exc:
         destino.unlink(missing_ok=True)
         if destino_corrente:
@@ -324,12 +329,12 @@ async def criar_medicao(
     return saida
 
 
-@router.get("/motors/{motor_id}/measurements", response_model=Page[MeasurementOut])
+@router.get("/motors/{motor_id}/measurements", response_model=Page[MeasurementListItem])
 def historico_medicoes(
     motor_id: uuid.UUID, db: DbSession, user: CurrentUser,
     limit: Annotated[int, Query(ge=1, le=500)] = 50,
     offset: Annotated[int, Query(ge=0)] = 0,
-) -> Page[MeasurementOut]:
+) -> Page[MeasurementListItem]:
     """Historico do motor, do mais recente para o mais antigo.
 
     Usa o indice composto (motor_id, created_at).
@@ -343,8 +348,23 @@ def historico_medicoes(
     itens = list(db.scalars(
         select(Measurement).where(Measurement.motor_id == motor_id)
         .order_by(Measurement.created_at.desc()).limit(limit).offset(offset)))
-    return Page(items=[MeasurementOut.model_validate(m) for m in itens],
-                total=total, limit=limit, offset=offset)
+    # quais previsoes ja foram confirmadas em campo, para a tela nao oferecer
+    # registrar a mesma inspecao duas vezes
+    inspecionadas = set(db.scalars(
+        select(Inspection.prediction_id)
+        .where(Inspection.prediction_id.is_not(None))).all())
+
+    linhas = []
+    for m in itens:
+        linha = MeasurementListItem.model_validate(m)
+        if m.prediction:
+            linha.prediction_id = m.prediction.id
+            linha.fault_type = m.prediction.fault_type
+            linha.severity = m.prediction.severity
+            linha.inspected = m.prediction.id in inspecionadas
+        linhas.append(linha)
+
+    return Page(items=linhas, total=total, limit=limit, offset=offset)
 
 
 @router.get("/motors/{motor_id}/predictions", response_model=Page[PredictionOut])
