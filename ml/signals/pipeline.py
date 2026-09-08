@@ -20,12 +20,6 @@ A diferenca medida entre os perfis (leave-one-specimen-out):
     kaist_full          88,7 %         63,1 %
     field_single        85,4 %         56,1 %
 
-Medido e NAO implementado: quatro acelerometros sem corrente chegam a 89,5 %
-com janela de 0,5 s (ml/scripts/14_janela_curta.py). A corrente nao contribui
-para a identificacao do tipo — o que separa os perfis e o numero de canais de
-vibracao. Fica registrado como trabalho futuro, dependente de instrumentacao
-com mais de um sensor.
-
 O diagnostico de TIPO e robusto a reducao de instrumentacao (rolamento segue em
 100 %); a severidade e o reconhecimento da condicao normal e que dependem da
 instrumentacao completa.
@@ -73,10 +67,9 @@ PROFILES: dict[str, ProfileSpec] = {
 def select_profile(n_vibration_channels: int, has_current: bool) -> str:
     """Escolhe o perfil mais completo compativel com o que foi enviado.
 
-    Um arquivo de quatro canais sem corrente cai no perfil de um canal. Um
-    perfil dedicado de quatro canais foi medido (89,5 %, ver
-    ml/scripts/14_janela_curta.py) e nao foi treinado: a instrumentacao em uso
-    tem um sensor so, e um perfil sem artefato desviaria a inferencia para um
+    Um arquivo de quatro canais sem corrente cai no perfil de um canal. Nao ha
+    perfil dedicado a essa combinacao: a instrumentacao em uso tem um sensor so,
+    e rotear para um perfil sem artefato treinado desviaria a inferencia para um
     modelo inexistente.
     """
     if n_vibration_channels >= 4 and has_current:

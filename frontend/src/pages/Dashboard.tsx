@@ -1,15 +1,30 @@
 /**
  * Painel inicial.
  *
- * A pergunta que esta tela responde e "o que precisa de atencao agora?". Por
- * isso a fila de prioridade ocupa o centro, e os totais ficam como contexto
- * acima dela. Totais dizem como a planta esta; a fila diz o que fazer a seguir.
+ * A pergunta que esta tela responde é "o que precisa de atenção agora?".
+ *
+ * Duas decisões de apresentação, ambas contra a versão anterior:
+ *
+ * 1. **A composição da planta é uma barra, não cinco contadores.** Cinco caixas
+ *    iguais dizem quantos motores há em cada condição; nenhuma diz a proporção,
+ *    que é a leitura útil. Dois motores com falha em quarenta é uma planta
+ *    saudável com um problema; dois em quatro é uma planta em colapso. A barra
+ *    mostra a diferença antes de qualquer número ser lido.
+ *
+ * 2. **A fila de inspeção é uma lista, não uma tabela.** Tabela serve para
+ *    comparar valores célula a célula. Uma fila de triagem é varrida de cima
+ *    para baixo e acionada — e oito colunas com sub-rótulos dentro das células
+ *    tornavam essa varredura lenta justamente na tela onde ela precisa ser
+ *    instantânea.
  */
 
 import { Link } from "react-router-dom";
-import { ROTULO_REGRA, type Dashboard as TDashboard } from "../api/types";
 import {
-  BarraConfianca,
+  ROTULO_REGRA,
+  type Dashboard as TDashboard,
+  type Severity,
+} from "../api/types";
+import {
   Carregando,
   Erro,
   NomeFalha,
@@ -21,22 +36,60 @@ import {
 } from "../components/ui";
 import { useApi } from "../hooks/useApi";
 
-function Contador({
-  rotulo,
-  valor,
-  cor,
-}: {
-  rotulo: string;
-  valor: number;
-  cor?: string;
-}) {
+const FAIXAS: { chave: keyof Composicao; classe: string; rotulo: string }[] = [
+  { chave: "failure", classe: "FAILURE", rotulo: "com falha" },
+  { chave: "warning", classe: "WARNING", rotulo: "em atenção" },
+  { chave: "healthy", classe: "HEALTHY", rotulo: "saudáveis" },
+  { chave: "unmeasured", classe: "neutro", rotulo: "sem medição" },
+];
+
+interface Composicao {
+  healthy: number;
+  warning: number;
+  failure: number;
+  unmeasured: number;
+}
+
+/** A planta inteira numa peça: proporção acima, contagem como legenda. */
+function ComposicaoDaPlanta({ c }: { c: Composicao }) {
+  const total = c.healthy + c.warning + c.failure + c.unmeasured;
+  if (total === 0) return null;
+
   return (
-    <div className="cartao" style={{ padding: "0.9rem 1.1rem" }}>
-      <div style={{ fontSize: "1.75rem", fontWeight: 700, color: cor, lineHeight: 1.1 }}>
-        {valor}
+    <section className="cartao">
+      <div className="rotulo" style={{ marginBottom: "0.7rem" }}>
+        Composição da planta
       </div>
-      <div className="faint">{rotulo}</div>
-    </div>
+
+      <div className="proporcao" role="img" aria-label={
+        FAIXAS.map((f) => `${c[f.chave]} ${f.rotulo}`).join(", ")
+      }>
+        {FAIXAS.map((f) =>
+          c[f.chave] > 0 ? (
+            <span
+              key={f.chave}
+              className={f.classe}
+              style={{ width: `${(c[f.chave] / total) * 100}%` }}
+            />
+          ) : null,
+        )}
+      </div>
+
+      <div
+        className="linha"
+        style={{ gap: "1.6rem", flexWrap: "wrap", marginTop: "0.9rem" }}
+      >
+        {FAIXAS.map((f) => (
+          <div key={f.chave} className="linha" style={{ gap: "0.5rem" }}>
+            <span className={`ponto ${f.classe}`} />
+            <span className="medida" style={{ fontSize: "1.2rem" }}>
+              {c[f.chave]}
+            </span>
+            <span className="faint">{f.rotulo}</span>
+          </div>
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -48,27 +101,20 @@ export default function Dashboard() {
   if (!dados) return null;
 
   const c = dados.severity_counts;
+  const fila = dados.critical_motors;
 
   return (
-    <div className="pilha">
+    <div className="pilha" style={{ gap: "1.3rem" }}>
       <div>
         <h1>Visão geral da planta</h1>
-        <p className="faint" style={{ margin: "0.2rem 0 0" }}>
+        <p className="faint" style={{ margin: "0.25rem 0 0" }}>
           {dados.monitored_motors} de {dados.total_motors} motores com medição ·{" "}
-          {dados.measurements_last_7d} coletas nos últimos 7 dias
+          {dados.measurements_last_7d} coletas nos últimos 7 dias ·{" "}
+          {dados.open_alerts} {dados.open_alerts === 1 ? "alerta aberto" : "alertas abertos"}
         </p>
       </div>
 
-      <div
-        className="grade"
-        style={{ gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))" }}
-      >
-        <Contador rotulo="Saudáveis" valor={c.healthy} cor="var(--healthy)" />
-        <Contador rotulo="Em atenção" valor={c.warning} cor="var(--warning)" />
-        <Contador rotulo="Com falha" valor={c.failure} cor="var(--failure)" />
-        <Contador rotulo="Sem medição" valor={c.unmeasured} cor="var(--text-faint)" />
-        <Contador rotulo="Alertas abertos" valor={dados.open_alerts} />
-      </div>
+      <ComposicaoDaPlanta c={c} />
 
       {dados.divergence_alerts > 0 && (
         <div className="aviso atencao">
@@ -79,125 +125,134 @@ export default function Dashboard() {
           </strong>{" "}
           Nesses casos o modelo e a assinatura física apontam condições
           diferentes — o diagnóstico é menos confiável e a inspeção tem
-          prioridade.{" "}
-          <Link to="/alertas?divergencia=1">Ver quais</Link>
+          prioridade. <Link to="/alertas?divergencia=1">Ver quais</Link>
         </div>
       )}
 
-      <section className="cartao">
+      <section>
         <div
           className="linha"
-          style={{ justifyContent: "space-between", marginBottom: "0.9rem" }}
+          style={{ justifyContent: "space-between", marginBottom: "0.8rem" }}
         >
-          <h2>Motores que exigem atenção</h2>
-          <Link to="/alertas" className="faint">
+          <div>
+            <h2>Fila de inspeção</h2>
+            <p className="faint" style={{ margin: "0.15rem 0 0" }}>
+              Ordenada por severidade × criticidade do motor × agravamento
+            </p>
+          </div>
+          <Link to="/alertas" className="faint" style={{ whiteSpace: "nowrap" }}>
             todos os alertas →
           </Link>
         </div>
 
-        {dados.critical_motors.length === 0 ? (
-          <Vazio>Nenhum alerta aberto. Todos os motores medidos estão em condição normal.</Vazio>
+        {fila.length === 0 ? (
+          <div className="cartao">
+            <Vazio>
+              Nenhum alerta aberto. Todos os motores medidos estão em condição
+              normal.
+            </Vazio>
+          </div>
         ) : (
-          <div style={{ overflowX: "auto" }}>
-            <table className="responsiva">
-              <thead>
-                <tr>
-                  <th style={{ width: 34 }}>#</th>
-                  <th>Motor</th>
-                  <th>Local</th>
-                  <th style={{ width: 44 }}>Crit.</th>
-                  <th>Condição</th>
-                  <th>Tipo</th>
-                  <th style={{ width: 150 }}>Confiança no tipo</th>
-                  <th style={{ width: 80 }}>Prioridade</th>
-                </tr>
-              </thead>
-              <tbody>
-                {dados.critical_motors.map((m, i) => (
-                  <tr key={m.motor_id}>
-                    <td data-rotulo="" className="faint">{i + 1}</td>
-                    <td data-rotulo="Motor" className="bloco">
-                      <Link to={`/motores/${m.motor_id}`}>
-                        <strong>{m.tag}</strong>
-                      </Link>
-                      <div className="faint">{m.name}</div>
-                      {m.top_rule && (
-                        <div className="faint" style={{ marginTop: 2 }}>
-                          {ROTULO_REGRA[m.top_rule] ?? m.top_rule}
-                        </div>
-                      )}
-                    </td>
-                    <td data-rotulo="Local" className="faint bloco">
-                      {m.area_name && <div>{m.area_name}</div>}
-                      {m.line_name}
-                    </td>
-                    <td data-rotulo="Criticidade">
-                      <SeloCriticidade valor={m.criticality} />
-                    </td>
-                    <td data-rotulo="Condição" className="bloco">
-                      <SeloSeveridade valor={m.severity} />
-                      {m.trend_pct !== null && m.trend_pct > 20 && (
-                        <div
-                          className="faint"
-                          style={{ color: "var(--warning)", marginTop: 3 }}
-                        >
-                          ↑ {m.trend_pct.toFixed(0)}% vs anterior
-                        </div>
-                      )}
-                    </td>
-                    <td data-rotulo="Tipo" className="bloco">
-                      <NomeFalha valor={m.fault_type} />
-                      <div style={{ marginTop: 3 }}>
-                        <SeloEvidencia
-                          concorda={m.evidence_agreement}
-                          tipoFisico={m.physical_type}
-                        />
-                      </div>
-                    </td>
-                    <td data-rotulo="Confiança no tipo">
-                      {m.confidence !== null && <BarraConfianca valor={m.confidence} />}
-                      <div className="faint" style={{ marginTop: 2 }}>
-                        certeza sobre o tipo, não sobre a gravidade
-                      </div>
-                    </td>
-                    <td data-rotulo="Prioridade">
+          <div className="triagem">
+            {fila.map((m, i) => (
+              <article
+                key={m.motor_id}
+                className={`triagem-item rail ${m.severity ?? "neutro"}`}
+              >
+                <div className="triagem-ordem">{i + 1}</div>
+
+                <div className="triagem-corpo">
+                  <div className="linha" style={{ gap: "0.5rem", flexWrap: "wrap" }}>
+                    <Link to={`/motores/${m.motor_id}`} className="triagem-tag">
+                      {m.tag}
+                    </Link>
+                    <SeloSeveridade valor={m.severity} />
+                    <SeloCriticidade valor={m.criticality} />
+                    {m.trend_pct !== null && m.trend_pct > 20 && (
                       <span
                         className="mono"
-                        style={{
-                          fontWeight: 700,
-                          color:
-                            m.priority_score >= 100
-                              ? "var(--failure)"
-                              : "var(--warning)",
-                        }}
+                        style={{ color: "var(--warning)", fontSize: "0.78rem" }}
                       >
-                        {m.priority_score.toFixed(0)}
+                        ↑ {m.trend_pct.toFixed(0)}%
                       </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                    )}
+                  </div>
+
+                  <div className="faint" style={{ marginTop: "0.15rem" }}>
+                    {m.name}
+                    {m.line_name && ` · ${m.line_name}`}
+                    {m.area_name && ` · ${m.area_name}`}
+                  </div>
+
+                  {m.top_rule && (
+                    <div style={{ marginTop: "0.3rem", fontSize: "0.85rem" }}>
+                      {ROTULO_REGRA[m.top_rule] ?? m.top_rule}
+                    </div>
+                  )}
+                </div>
+
+                <div className="triagem-lado">
+                  <div style={{ minWidth: 120 }}>
+                    <div className="rotulo" style={{ fontSize: "0.62rem" }}>
+                      Tipo provável
+                    </div>
+                    <div style={{ marginTop: "0.15rem" }}>
+                      <NomeFalha valor={m.fault_type} />
+                    </div>
+                    <div style={{ marginTop: "0.25rem" }}>
+                      <SeloEvidencia
+                        concorda={m.evidence_agreement}
+                        tipoFisico={m.physical_type}
+                      />
+                    </div>
+                  </div>
+
+                  <div style={{ textAlign: "right", minWidth: 62 }}>
+                    <div className="rotulo" style={{ fontSize: "0.62rem" }}>
+                      Prioridade
+                    </div>
+                    <div
+                      className="medida"
+                      style={{
+                        color:
+                          m.priority_score >= 100
+                            ? "var(--failure)"
+                            : "var(--warning)",
+                      }}
+                    >
+                      {m.priority_score.toFixed(0)}
+                    </div>
+                  </div>
+                </div>
+              </article>
+            ))}
           </div>
         )}
       </section>
 
       {dados.recent_alerts.length > 0 && (
         <section className="cartao">
-          <h2 style={{ marginBottom: "0.8rem" }}>Alertas recentes</h2>
-          <div className="pilha" style={{ gap: "0.6rem" }}>
+          <div className="rotulo" style={{ marginBottom: "0.8rem" }}>
+            Atividade recente
+          </div>
+          <div className="pilha" style={{ gap: "0.7rem" }}>
             {dados.recent_alerts.slice(0, 5).map((a) => (
               <div
                 key={a.id}
                 className="linha"
                 style={{ alignItems: "flex-start", gap: "0.7rem" }}
               >
-                <span className={`ponto ${a.severity}`} style={{ marginTop: 7 }} />
-                <div style={{ flex: 1 }}>
+                <span
+                  className={`ponto ${a.severity as Severity}`}
+                  style={{ marginTop: 7 }}
+                />
+                <div style={{ flex: 1, minWidth: 0 }}>
                   <Link to={`/motores/${a.motor_id}`}>
                     <strong>{a.motor_tag}</strong>
                   </Link>{" "}
-                  <span className="faint">{ROTULO_REGRA[a.rule] ?? a.rule}</span>
+                  <span className="dim" style={{ fontSize: "0.87rem" }}>
+                    {ROTULO_REGRA[a.rule] ?? a.rule}
+                  </span>
                   <div className="faint">{dataHora(a.created_at)}</div>
                 </div>
               </div>

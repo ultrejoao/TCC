@@ -1,36 +1,58 @@
-/* Design do sistema.
-   CSS puro com custom properties: sem dependencia extra de build, e as
-   decisoes de cor ficam num lugar so. As cores de severidade seguem a
-   convencao industrial (verde/ambar/vermelho) e foram escolhidas com
-   contraste suficiente para leitura em tela de celular sob luz de fabrica. */
+/* Design do sistema — painel de instrumentação.
+   ---------------------------------------------------------------------------
+   Duas regras governam tudo o que vem abaixo, e valem mais que qualquer
+   escolha estética isolada:
+
+   1. MATIZ PERTENCE AO ESTADO, E SÓ AO ESTADO.
+      Botões, links, cabeçalhos e bordas são neutros. Verde, âmbar e vermelho
+      aparecem exclusivamente para comunicar condição do motor. Numa tela de
+      monitoramento, cromo colorido compete com o alarme: se tudo tem cor, a
+      severidade deixa de saltar aos olhos.
+
+   2. ESTADO SE CODIFICA NA FORMA, NÃO SÓ NA COR.
+      Toda linha e todo cartão que carregam condição ganham uma faixa lateral
+      (`.rail`). A condição é lida antes de qualquer texto ser processado — e
+      continua legível para quem não distingue as três cores.
+
+   Tipografia: IBM Plex, desenhada para produtos de engenharia da IBM. O corte
+   mono serve os números de medição, sempre com `tabular-nums` para que casas
+   decimais alinhem em coluna. Se a fonte não carregar (sala sem internet), a
+   pilha de fallback assume sem quebrar o layout. */
 
 :root {
-  --bg: #0f172a;
-  --bg-elev: #1e293b;
-  --bg-elev-2: #273449;
-  --border: #334155;
-  --text: #e2e8f0;
-  --text-dim: #94a3b8;
-  --text-faint: #64748b;
+  /* --- neutros: grafite levemente frio, contraste alto para projetor ------ */
+  --bg: #101214;
+  --bg-elev: #181b1e;
+  --bg-elev-2: #212529;
+  --border: #2b3136;
+  --border-forte: #3b4249;
 
-  --accent: #38bdf8;
-  --accent-dim: #0ea5e9;
+  --text: #edeff1;
+  --text-dim: #a6adb4;
+  --text-faint: #757d85;
 
-  --healthy: #22c55e;
-  --warning: #f59e0b;
-  --failure: #ef4444;
-  --neutral: #64748b;
+  /* --- interativo: aço dessaturado, longe das três cores de estado ------- */
+  --accent: #86a3bb;
+  --accent-dim: #6b8ba6;
 
-  --healthy-bg: rgba(34, 197, 94, 0.12);
-  --warning-bg: rgba(245, 158, 11, 0.12);
-  --failure-bg: rgba(239, 68, 68, 0.12);
+  /* --- estado: as únicas cores saturadas da interface -------------------- */
+  --healthy: #52a06e;
+  --warning: #d69a35;
+  --failure: #d4614e;
+  --neutral: #6b7379;
+
+  --healthy-bg: rgba(82, 160, 110, 0.14);
+  --warning-bg: rgba(214, 154, 53, 0.14);
+  --failure-bg: rgba(212, 97, 78, 0.14);
+  --neutral-bg: rgba(107, 115, 121, 0.16);
 
   --radius: 10px;
   --radius-sm: 6px;
-  --shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  --sombra: 0 1px 2px rgba(0, 0, 0, 0.4), 0 6px 20px rgba(0, 0, 0, 0.22);
+  --sombra-forte: 0 2px 4px rgba(0, 0, 0, 0.45), 0 12px 32px rgba(0, 0, 0, 0.3);
 
-  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --mono: "SF Mono", "Cascadia Code", Consolas, monospace;
+  --font: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --mono: "IBM Plex Mono", "SF Mono", "Cascadia Code", Consolas, monospace;
 }
 
 * {
@@ -55,7 +77,7 @@ body {
   color: var(--text);
   font-family: var(--font);
   font-size: 15px;
-  line-height: 1.5;
+  line-height: 1.55;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -64,16 +86,28 @@ h2,
 h3 {
   margin: 0;
   font-weight: 600;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
 }
 h1 {
-  font-size: 1.5rem;
+  font-size: 1.55rem;
+  letter-spacing: -0.025em;
 }
 h2 {
-  font-size: 1.15rem;
+  font-size: 1.1rem;
 }
 h3 {
-  font-size: 0.95rem;
+  font-size: 0.92rem;
+}
+
+/* Rótulo de seção: versalete espaçado. Distingue "nome do campo" de "conteúdo"
+   sem gastar peso tipográfico, que fica reservado para os dados. */
+.rotulo {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--text-faint);
 }
 
 a {
@@ -82,33 +116,52 @@ a {
 }
 a:hover {
   text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
+/* --- controles ----------------------------------------------------------- */
+/* O primário é neutro de alto contraste, não colorido: a única coisa que deve
+   competir com um alerta vermelho na tela é outro alerta. */
 button {
   font: inherit;
   cursor: pointer;
-  border: none;
+  border: 1px solid transparent;
   border-radius: var(--radius-sm);
-  padding: 0.55rem 1rem;
-  background: var(--accent-dim);
-  color: #04121c;
+  padding: 0.5rem 1rem;
+  background: var(--text);
+  color: var(--bg);
   font-weight: 600;
-  transition: filter 0.15s;
+  letter-spacing: -0.005em;
+  transition:
+    background 0.14s ease,
+    border-color 0.14s ease,
+    transform 0.06s ease;
 }
 button:hover:not(:disabled) {
-  filter: brightness(1.12);
+  background: #ffffff;
+}
+button:active:not(:disabled) {
+  transform: translateY(1px);
 }
 button:disabled {
-  opacity: 0.5;
+  opacity: 0.4;
   cursor: not-allowed;
 }
 button.secundario {
-  background: var(--bg-elev-2);
+  background: transparent;
   color: var(--text);
+  border-color: var(--border-forte);
+}
+button.secundario:hover:not(:disabled) {
+  background: var(--bg-elev-2);
+  border-color: var(--text-faint);
 }
 button.perigo {
   background: var(--failure);
-  color: #fff;
+  color: #1a0d0a;
+}
+button.perigo:hover:not(:disabled) {
+  background: #e0705d;
 }
 
 input,
@@ -116,22 +169,42 @@ select,
 textarea {
   font: inherit;
   width: 100%;
-  padding: 0.55rem 0.7rem;
+  padding: 0.5rem 0.7rem;
   background: var(--bg);
   color: var(--text);
-  border: 1px solid var(--border);
+  border: 1px solid var(--border-forte);
   border-radius: var(--radius-sm);
+  transition: border-color 0.14s ease;
+}
+input:hover,
+select:hover,
+textarea:hover {
+  border-color: var(--text-faint);
 }
 input:focus,
 select:focus,
 textarea:focus {
-  outline: 2px solid var(--accent-dim);
-  outline-offset: -1px;
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(134, 163, 187, 0.18);
+}
+input[type="file"] {
+  padding: 0.4rem;
+  color: var(--text-dim);
+}
+
+/* Foco visível por teclado em tudo que não seja campo de formulário. */
+a:focus-visible,
+button:focus-visible,
+summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
 }
 
 label {
   display: block;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: var(--text-dim);
   margin-bottom: 0.3rem;
   font-weight: 500;
@@ -141,12 +214,13 @@ label {
   margin-bottom: 0.9rem;
 }
 
-/* --- blocos ------------------------------------------------------------- */
+/* --- blocos -------------------------------------------------------------- */
 .cartao {
   background: var(--bg-elev);
   border: 1px solid var(--border);
   border-radius: var(--radius);
-  padding: 1.1rem;
+  padding: 1.15rem 1.25rem;
+  box-shadow: var(--sombra);
 }
 
 .pilha {
@@ -168,7 +242,8 @@ label {
 
 .mono {
   font-family: var(--mono);
-  font-size: 0.85em;
+  font-size: 0.86em;
+  font-variant-numeric: tabular-nums;
 }
 
 .dim {
@@ -176,36 +251,41 @@ label {
 }
 .faint {
   color: var(--text-faint);
-  font-size: 0.85rem;
+  font-size: 0.84rem;
 }
 
-/* --- severidade --------------------------------------------------------- */
+/* --- severidade ---------------------------------------------------------- */
 .selo {
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  padding: 0.2rem 0.6rem;
+  padding: 0.18rem 0.55rem;
   border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
   white-space: nowrap;
+  border: 1px solid transparent;
 }
 .selo.HEALTHY {
   background: var(--healthy-bg);
   color: var(--healthy);
+  border-color: rgba(82, 160, 110, 0.3);
 }
 .selo.WARNING {
   background: var(--warning-bg);
   color: var(--warning);
+  border-color: rgba(214, 154, 53, 0.3);
 }
 .selo.FAILURE {
   background: var(--failure-bg);
   color: var(--failure);
+  border-color: rgba(212, 97, 78, 0.32);
 }
 .selo.neutro {
-  background: rgba(100, 116, 139, 0.15);
+  background: var(--neutral-bg);
   color: var(--text-dim);
+  border-color: var(--border-forte);
 }
 
 .ponto {
@@ -227,33 +307,157 @@ label {
   background: var(--neutral);
 }
 
-/* --- tabela ------------------------------------------------------------- */
+/* Faixa lateral de condição. É o que permite varrer a tela e saber o estado de
+   cada item antes de ler uma palavra. */
+.rail {
+  border-left: 3px solid var(--neutral);
+}
+.rail.HEALTHY {
+  border-left-color: var(--healthy);
+}
+.rail.WARNING {
+  border-left-color: var(--warning);
+}
+.rail.FAILURE {
+  border-left-color: var(--failure);
+}
+
+/* --- medidas ------------------------------------------------------------- */
+/* Número de leitura: grande, tabular, com a unidade subordinada. Usado onde o
+   valor é o conteúdo, não um rótulo. */
+.medida {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 1.5rem;
+  font-weight: 600;
+  line-height: 1.15;
+  letter-spacing: -0.02em;
+}
+.medida .unidade {
+  font-size: 0.72rem;
+  font-weight: 400;
+  color: var(--text-faint);
+  margin-left: 0.2rem;
+  letter-spacing: 0;
+}
+
+/* Barra de proporção: a composição da planta numa peça só. Cinco contadores
+   soltos dizem quantos; a barra diz a proporção, que é a leitura útil. */
+.proporcao {
+  display: flex;
+  height: 9px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--bg-elev-2);
+}
+.proporcao > span {
+  display: block;
+  transition: width 0.4s ease;
+}
+.proporcao .HEALTHY {
+  background: var(--healthy);
+}
+.proporcao .WARNING {
+  background: var(--warning);
+}
+.proporcao .FAILURE {
+  background: var(--failure);
+}
+.proporcao .neutro {
+  background: var(--neutral);
+}
+
+/* --- fila de triagem ----------------------------------------------------- */
+/* Uma fila de inspeção é varrida e acionada, não comparada célula a célula.
+   Por isso é lista com faixa de condição, e não tabela de oito colunas. */
+.triagem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+.triagem-item {
+  display: grid;
+  grid-template-columns: 2.2rem minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 0.9rem;
+  padding: 0.8rem 1rem;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  transition:
+    border-color 0.14s ease,
+    background 0.14s ease;
+}
+.triagem-item:hover {
+  border-color: var(--border-forte);
+  background: var(--bg-elev-2);
+}
+.triagem-ordem {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.95rem;
+  color: var(--text-faint);
+  text-align: right;
+}
+.triagem-corpo {
+  min-width: 0;
+}
+.triagem-tag {
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+.triagem-lado {
+  display: flex;
+  align-items: center;
+  gap: 1.1rem;
+  flex-shrink: 0;
+}
+
+/* --- barra de confiança -------------------------------------------------- */
+.barra {
+  height: 5px;
+  border-radius: 999px;
+  background: var(--bg-elev-2);
+  overflow: hidden;
+}
+.barra > span {
+  display: block;
+  height: 100%;
+  background: var(--text-dim);
+}
+
+/* --- tabela -------------------------------------------------------------- */
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.88rem;
+  font-size: 0.87rem;
 }
 th {
   text-align: left;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.08em;
   color: var(--text-faint);
   font-weight: 600;
-  padding: 0.5rem 0.6rem;
-  border-bottom: 1px solid var(--border);
+  padding: 0.45rem 0.6rem;
+  border-bottom: 1px solid var(--border-forte);
+  white-space: nowrap;
 }
 td {
-  padding: 0.65rem 0.6rem;
-  border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+  padding: 0.6rem;
+  border-bottom: 1px solid var(--border);
+  font-variant-numeric: tabular-nums;
+}
+tbody tr:last-child td {
+  border-bottom: none;
 }
 tbody tr:hover {
-  background: rgba(255, 255, 255, 0.02);
+  background: rgba(255, 255, 255, 0.025);
 }
 
-/* --- avisos ------------------------------------------------------------- */
+/* --- avisos -------------------------------------------------------------- */
 .aviso {
-  padding: 0.75rem 0.9rem;
+  padding: 0.8rem 1rem;
   border-radius: var(--radius-sm);
   border-left: 3px solid;
   font-size: 0.87rem;
@@ -271,11 +475,11 @@ tbody tr:hover {
   border-color: var(--healthy);
 }
 .aviso.info {
-  background: rgba(56, 189, 248, 0.1);
-  border-color: var(--accent);
+  background: var(--bg-elev-2);
+  border-color: var(--border-forte);
 }
 
-/* --- carregando --------------------------------------------------------- */
+/* --- carregando ---------------------------------------------------------- */
 .esqueleto {
   background: linear-gradient(
     90deg,
@@ -298,6 +502,16 @@ tbody tr:hover {
   text-align: center;
   padding: 2.5rem 1rem;
   color: var(--text-faint);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* --- responsivo -----------------------------------------------------------
@@ -333,7 +547,19 @@ tbody tr:hover {
   }
 
   .cartao {
-    padding: 0.85rem;
+    padding: 0.9rem;
+  }
+
+  /* a fila de triagem perde a coluna de ordem e empilha o lado direito */
+  .triagem-item {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.5rem;
+  }
+  .triagem-ordem {
+    display: none;
+  }
+  .triagem-lado {
+    justify-content: space-between;
   }
 
   /* tabela -> cartoes empilhados */
@@ -377,21 +603,7 @@ tbody tr:hover {
   table.responsiva td[data-rotulo=""]::before {
     content: none;
   }
-}
 
-/* alvos de toque confortaveis em telas sensiveis */
-@media (pointer: coarse) {
-  button,
-  select,
-  input[type="checkbox"] {
-    min-height: 42px;
-  }
-  input[type="checkbox"] {
-    min-height: 20px;
-  }
-}
-
-@media (max-width: 780px) {
   /* Celulas com varias informacoes (tag + nome + regra) empilham a direita,
      em vez de disputar a largura na horizontal e quebrar cada palavra. */
   table.responsiva td.bloco {
@@ -407,9 +619,7 @@ tbody tr:hover {
   table.responsiva td.bloco > * {
     max-width: 65%;
   }
-}
 
-@media (max-width: 780px) {
   /* Arvore: a indentacao por nivel consome largura demais no celular, e a
      linha do motor quebra. Reduz-se o recuo e a linha vira bloco. */
   .arvore-no {
@@ -428,7 +638,7 @@ tbody tr:hover {
     align-items: center;
     gap: 0.4rem;
     padding: 0.5rem 0;
-    border-bottom: 1px solid rgba(51, 65, 85, 0.5);
+    border-bottom: 1px solid var(--border);
   }
   table.arvore-motores td {
     width: auto !important;
@@ -438,5 +648,17 @@ tbody tr:hover {
   table.arvore-motores td:nth-child(2) {
     width: 100% !important;
     order: 10;
+  }
+}
+
+/* alvos de toque confortaveis em telas sensiveis */
+@media (pointer: coarse) {
+  button,
+  select,
+  input[type="checkbox"] {
+    min-height: 42px;
+  }
+  input[type="checkbox"] {
+    min-height: 20px;
   }
 }
