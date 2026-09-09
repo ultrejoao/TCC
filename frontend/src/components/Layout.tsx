@@ -20,7 +20,6 @@ const OPERACAO = [
 
 const ADMINISTRACAO = [
   { para: "/cadastro", rotulo: "Cadastro" },
-  { para: "/modelos", rotulo: "Modelos" },
   { para: "/auditoria", rotulo: "Auditoria" },
 ];
 
@@ -85,7 +84,7 @@ export default function Layout() {
           <div className="linha" style={{ gap: "0.5rem" }}>
             <span className="ponto HEALTHY" aria-hidden="true" />
             <strong style={{ letterSpacing: "-0.03em", fontSize: "0.98rem" }}>
-              Predição de Falhas
+              DiagVibration
             </strong>
           </div>
 

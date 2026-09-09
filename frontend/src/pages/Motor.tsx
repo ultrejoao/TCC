@@ -11,6 +11,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   CartesianGrid,
   Legend,
+  ReferenceLine,
   Line,
   LineChart,
   ResponsiveContainer,
@@ -40,6 +41,7 @@ import {
   dataHora,
 } from "../components/ui";
 import EditarMotor from "../components/EditarMotor";
+import FormaDeOnda from "../components/FormaDeOnda";
 import RegistrarInspecao from "../components/RegistrarInspecao";
 import { useApi } from "../hooks/useApi";
 
@@ -55,6 +57,7 @@ export default function Motor() {
   const [salvando, setSalvando] = useState(false);
   const [editando, setEditando] = useState(false);
   const [inspecionando, setInspecionando] = useState<MeasurementListItem | null>(null);
+  const [pontoId, setPontoId] = useState<string | null>(null);
 
   const motor = useApi<MotorDetail>(id ? `/motors/${id}` : null);
   const medicoes = useApi<Page<MeasurementListItem>>(
@@ -73,16 +76,23 @@ export default function Motor() {
   const historico = [...(medicoes.dados?.items ?? [])].reverse();
 
   const serie = historico.map((x) => ({
+    id: x.id,
     data: dataCurta(x.collected_at),
+    quando: x.collected_at,
     v_rms: x.iso_v_rms_mms,
     v_1x: x.iso_v_1x_mms,
     a_hf: x.iso_a_hf_g,
   }));
 
-  async function tratarAlerta(alertaId: string, status: string) {
+  // A medicao mais recente ja vem selecionada: o grafico de onda aparece sem
+  // exigir descoberta, e clicar em outro ponto troca a selecao.
+  const selecionada = serie.find((s) => s.id === pontoId) ?? serie[serie.length - 1];
+
+  /** Resolver e terminal: a API recusa reabrir um alerta ja resolvido. */
+  async function resolverAlerta(alertaId: string) {
     setSalvando(true);
     try {
-      await put(`/alerts/${alertaId}`, { status });
+      await put(`/alerts/${alertaId}`, { status: "RESOLVED" });
       alertas.recarregar();
       motor.recarregar();
     } finally {
@@ -198,15 +208,7 @@ export default function Motor() {
                   <button
                     className="secundario"
                     disabled={salvando}
-                    onClick={() => tratarAlerta(a.id, "ACKNOWLEDGED")}
-                    style={{ padding: "0.3rem 0.7rem", fontSize: "0.85rem" }}
-                  >
-                    Reconhecer
-                  </button>
-                  <button
-                    className="secundario"
-                    disabled={salvando}
-                    onClick={() => tratarAlerta(a.id, "RESOLVED")}
+                    onClick={() => resolverAlerta(a.id)}
                     style={{ padding: "0.3rem 0.7rem", fontSize: "0.85rem" }}
                   >
                     Resolver
@@ -233,21 +235,38 @@ export default function Motor() {
         ) : (
           <div style={{ height: 280 }}>
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={serie} margin={{ top: 8, right: 8, bottom: 4, left: -18 }}>
-                <CartesianGrid stroke="#334155" strokeDasharray="3 3" />
-                <XAxis dataKey="data" stroke="#64748b" fontSize={12} />
+              <LineChart
+                data={serie}
+                margin={{ top: 8, right: 8, bottom: 4, left: -18 }}
+                style={{ cursor: "pointer" }}
+                onClick={(estado: { activeTooltipIndex?: number }) => {
+                  const i = estado?.activeTooltipIndex;
+                  if (i != null && serie[i]) setPontoId(serie[i].id);
+                }}
+              >
+                <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" />
+                <XAxis dataKey="data" stroke="var(--text-faint)" fontSize={12} />
                 <YAxis
                   yAxisId="v"
-                  stroke="#64748b"
+                  stroke="var(--text-faint)"
                   fontSize={12}
-                  label={{ value: "mm/s", angle: -90, position: "insideLeft", fill: "#64748b", fontSize: 11 }}
+                  label={{ value: "mm/s", angle: -90, position: "insideLeft",
+                           fill: "var(--text-faint)", fontSize: 11 }}
                 />
-                <YAxis yAxisId="a" orientation="right" stroke="#64748b" fontSize={12} />
+                <YAxis yAxisId="a" orientation="right" stroke="var(--text-faint)" fontSize={12} />
+                {selecionada && (
+                  <ReferenceLine
+                    yAxisId="v"
+                    x={selecionada.data}
+                    stroke="var(--accent)"
+                    strokeDasharray="4 3"
+                  />
+                )}
                 <Tooltip
                   contentStyle={{
-                    background: "#1e293b",
-                    border: "1px solid #334155",
-                    borderRadius: 8,
+                    background: "var(--bg-elev-2)",
+                    border: "1px solid var(--border-forte)",
+                    borderRadius: 6,
                     fontSize: 13,
                   }}
                 />
@@ -283,7 +302,21 @@ export default function Motor() {
             </ResponsiveContainer>
           </div>
         )}
+
+        {serie.length >= 2 && (
+          <p className="faint" style={{ margin: "0.6rem 0 0", fontSize: "0.82rem" }}>
+            Clique num ponto do gráfico para ver a forma de onda daquela coleta.
+          </p>
+        )}
       </section>
+
+      {selecionada && (
+        <FormaDeOnda
+          key={selecionada.id}
+          medicaoId={selecionada.id}
+          quando={selecionada.quando}
+        />
+      )}
 
       <section className="cartao">
         <div className="linha" style={{ justifyContent: "space-between", marginBottom: "0.8rem" }}>

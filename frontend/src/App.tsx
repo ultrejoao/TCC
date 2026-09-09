@@ -7,7 +7,6 @@ import Cadastro from "./pages/Cadastro";
 import Coleta from "./pages/Coleta";
 import Dashboard from "./pages/Dashboard";
 import Login from "./pages/Login";
-import Modelos from "./pages/Modelos";
 import Motor from "./pages/Motor";
 import Planta from "./pages/Planta";
 
@@ -32,7 +31,6 @@ function Rotas() {
         <Route path="/alertas" element={<Alertas />} />
         <Route path="/coleta" element={<Coleta />} />
         <Route path="/cadastro" element={<Cadastro />} />
-        <Route path="/modelos" element={<Modelos />} />
         <Route path="/auditoria" element={<Auditoria />} />
         <Route path="/motores/:id" element={<Motor />} />
         <Route path="*" element={<Navigate to="/" replace />} />

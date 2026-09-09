@@ -4,13 +4,7 @@ As amostras saem dos ESPECIMES RESERVADOS — montagens que o modelo nunca viu n
 treino (ver ml/kaist/splits.py). Diagnosticar um desses arquivos mostra o
 comportamento real diante de um defeito inedito, e nao a memoria do treino.
 
-Por que recortar em vez de usar o .mat original: os arquivos do dataset tem 49 a
-98 MB, acima do limite de upload da API (50 MB). Alem disso, o .mat traz quatro
-acelerometros, enquanto um instrumento de campo fornece um canal — recortar um
-canal aproxima a demonstracao do uso real.
-
-Saida: ml/data/demo_samples/, com um CSV por condicao e um README explicando o
-que cada arquivo contem.
+Saida: ml/data/demo_samples/, 
 """
 
 import sys

@@ -22,7 +22,7 @@ class Alert(Base, TimestampMixin):
 
     Politica: HEALTHY nao gera alerta; WARNING recomenda inspecao; FAILURE
     recomenda intervencao. Divergencia entre modelo e evidencia fisica tambem
-    abre alerta, ainda que a severidade prevista seja baixa.
+    abre alerta.
     """
 
     __tablename__ = "alerts"
@@ -43,10 +43,6 @@ class Alert(Base, TimestampMixin):
     severity: Mapped[str] = mapped_column(String(10), nullable=False, index=True)
     status: Mapped[str] = mapped_column(String(15), nullable=False, default="OPEN", index=True)
     message: Mapped[str] = mapped_column(Text, nullable=False)
-
-    # --- por que este alerta existe ----------------------------------------
-    # A regra que disparou fica gravada: a pergunta "por que este alerta foi
-    # gerado?" precisa ter resposta exata, e nao reconstruida a posteriori.
     rule: Mapped[str] = mapped_column(String(40), nullable=False, index=True)
     reasons: Mapped[list] = mapped_column(JSONB, nullable=False, default=list)
 
@@ -89,10 +85,9 @@ class Inspection(Base, TimestampMixin):
     alert_id: Mapped[uuid.UUID | None] = mapped_column(
         PGUUID(as_uuid=True), ForeignKey("alerts.id", ondelete="SET NULL"))
 
-    # Qual previsao esta inspecao confirma ou refuta. O vinculo e explicito, e
-    # nao reconstruido depois pela data: uma inspecao de rotina nao tem alerta,
-    # e e justamente ela que mede o acerto em condicao normal — o caso que a
-    # validacao cruzada acerta menos (76 %) e que mais aparece em campo.
+    # Qual previsao esta inspecao confirma ou refuta. Vinculo explicito, e nao
+    # reconstruido pela data: inspecao de rotina nao tem alerta, e reconstruir
+    # erraria sempre que houvesse mais de uma medicao no intervalo.
     prediction_id: Mapped[uuid.UUID | None] = mapped_column(
         PGUUID(as_uuid=True), ForeignKey("predictions.id", ondelete="SET NULL"),
         index=True)

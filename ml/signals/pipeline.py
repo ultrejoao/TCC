@@ -1,28 +1,8 @@
-"""Extracao de features por perfil de instrumentacao.
+"""Extracao de features por perfil de instrumentacao, identica no treino e em campo.
 
-O mesmo codigo roda no treino (sobre o dataset KAIST) e em producao (sobre o
-arquivo que o tecnico envia). Se divergissem, o modelo receberia em campo
-features calculadas de forma diferente das do treino — um erro silencioso e
-dificil de detectar.
-
-Perfis
-------
-`kaist_full`    4 acelerometros + 1 fase de corrente -> 97 features
-                Usado na metodologia e nos resultados do TCC.
-
-`field_single`  1 canal de vibracao -> 25 features
-                Usado com instrumentacao de campo, que tipicamente fornece um
-                unico ponto de medicao e nenhuma corrente.
-
-A diferenca medida entre os perfis (leave-one-specimen-out):
-
-                    tipo de falha   severidade
-    kaist_full          88,7 %         63,1 %
-    field_single        85,4 %         56,1 %
-
-O diagnostico de TIPO e robusto a reducao de instrumentacao (rolamento segue em
-100 %); a severidade e o reconhecimento da condicao normal e que dependem da
-instrumentacao completa.
+    perfil          entrada                        features   tipo   severidade
+    kaist_full      4 acelerometros + corrente          97    88,7%     63,1%
+    field_single    1 canal de vibracao                 25    85,4%     56,1%
 """
 
 from __future__ import annotations

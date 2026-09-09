@@ -45,7 +45,7 @@ class SessionFiles:
 
 
 def _is_real_data_file(path: Path) -> bool:
-    """Ignora artefatos do Windows/Office (locks '~$...', arquivos ocultos)."""
+    
     return not path.name.startswith(("~$", ".") ) and path.stat().st_size > 1024
 
 

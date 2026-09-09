@@ -1,7 +1,7 @@
 """Arvore de componentes da fabrica: Planta > Area > Linha.
 
 Alem do CRUD, expoe a arvore completa com os contadores de alerta agregados por
-nivel — o tecnico ve onde esta o problema sem precisar abrir no por no.
+nivel
 """
 
 import uuid

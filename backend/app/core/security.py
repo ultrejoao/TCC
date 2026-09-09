@@ -1,27 +1,4 @@
-"""Primitivas de seguranca: hash de senha, JWT e protecao CSRF.
-
-Decisoes (justificar no TCC)
-----------------------------
-* **argon2id** para senha, nao SHA nem MD5. Argon2 venceu a Password Hashing
-  Competition (2015) e e a recomendacao atual da OWASP. Diferente de funcoes de
-  hash rapidas, e deliberadamente custoso em tempo E memoria, o que encarece
-  ataques com GPU/ASIC. O salt e gerado por senha, automaticamente.
-
-* **Access token curto (15 min) + refresh token longo (7 dias)**. Se o access
-  token vazar, a janela de abuso e pequena; a renovacao silenciosa preserva a
-  usabilidade em campo.
-
-* **Tokens em cookie httpOnly**, nao em localStorage. localStorage e legivel por
-  qualquer JavaScript da pagina, entao um unico XSS entrega o token. Cookie
-  httpOnly nao e acessivel por script.
-
-* **Protecao CSRF obrigatoria**. Cookies sao enviados automaticamente pelo
-  navegador, o que reabre a porta para CSRF — problema que o armazenamento em
-  header nao tem. Usa-se double-submit token: o valor vai num cookie legivel e
-  precisa ser repetido no cabecalho X-CSRF-Token. Um site atacante consegue
-  disparar a requisicao, mas nao consegue LER o cookie para preencher o
-  cabecalho, por causa da same-origin policy.
-"""
+"""Hash de senha (argon2id), JWT em cookie httpOnly e CSRF por double-submit."""
 
 import hmac
 import secrets
@@ -60,8 +37,7 @@ def verify_password(password: str, password_hash: str) -> tuple[bool, str | None
     """Verifica a senha.
 
     Retorna (valida, novo_hash). O `novo_hash` vem preenchido quando os
-    parametros de custo mudaram desde o cadastro — o chamador deve entao
-    regravar o hash, mantendo a base atualizada sem forcar troca de senha.
+    parametros de custo mudaram desde o cadastro
     """
     try:
         _hasher.verify(password_hash, password)

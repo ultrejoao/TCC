@@ -68,10 +68,6 @@ def require_csrf(
     x_csrf_token: Annotated[str | None, Header(alias=CSRF_HEADER)] = None,
 ) -> None:
     """Double-submit token nos metodos que alteram estado.
-
-    So se aplica quando a autenticacao veio por COOKIE. Requisicoes que usam o
-    cabecalho Authorization nao sofrem CSRF, porque o navegador nao envia esse
-    cabecalho automaticamente.
     """
     if request.method not in UNSAFE_METHODS:
         return
@@ -87,7 +83,7 @@ def require_roles(*roles: str):
     """Autorizacao por papel.
 
     O MVP opera com perfil unico autenticado; a dependencia ja existe para que o
-    RBAC completo seja adicao de decorador, nao refatoracao.
+    RBAC completo
     """
     def _check(user: CurrentUser) -> User:
         if roles and user.role not in roles:

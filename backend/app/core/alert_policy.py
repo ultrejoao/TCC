@@ -1,20 +1,7 @@
-"""Politica de alertas: quando uma medicao gera alerta, e com que prioridade.
+"""Politica de alertas: oito regras nomeadas, avaliadas em ordem.
 
-Por que isto e um modulo proprio, e nao um `if` dentro da rota: a pergunta
-"por que este alerta foi gerado?" precisa ter resposta exata e auditavel. Cada
-alerta grava a REGRA que o disparou, e as regras estao todas aqui, em ordem
-explicita de avaliacao.
-
-Principio que atravessa a politica
-----------------------------------
-**Divergencia nunca e silenciosa.** Se o modelo diz HEALTHY mas a assinatura
-fisica aponta falha, isso vira alerta — porque e exatamente a situacao em que a
-classe final e menos confiavel. Confiar cegamente na saida do classificador
-desperdicaria a segunda evidencia que o sistema ja calcula.
-
-A norma tambem age sozinha: zona ISO D gera alerta de FAILURE mesmo que o modelo
-discorde. Quando o valor absoluto de vibracao esta em faixa inaceitavel, quem
-provavelmente errou foi o modelo.
+    prioridade = severidade x criticidade do motor x agravamento
+                 criticidade A=1,5  B=1,0  C=0,7      tendencia = 0,25
 """
 
 from __future__ import annotations

@@ -1,37 +1,10 @@
-"""Severidade por criterio fisico, independente do aprendizado de maquina.
+"""Severidade pelo criterio fisico da ISO 10816, nao prevista pelo modelo.
 
-Decisao metodologica (documentar no TCC)
----------------------------------------
-A severidade NAO e prevista pelo modelo. O rotulo de severidade disponivel no
-dataset ("o menor nivel de cada familia e WARNING") e uma convencao
-administrativa, sem correspondencia monotonica com o sinal: o defeito de
-rolamento de 3,0 mm produz MENOS vibracao que o de 1,0 mm, e ha FAILURE com
-amplitude menor que a do motor saudavel. Treinar um classificador sobre esse
-rotulo produziu recall de 0,0 % para WARNING em especimes ineditos — o modelo
-reconhecia qual montagem era, nao o quanto ela era grave.
+Correlacao de Spearman com o nivel do defeito, por familia:
 
-Aqui a severidade e calculada, nao aprendida. O ML responde "que tipo de falha
-e esta?"; esta camada responde "quao severa esta a condicao vibratoria?".
-Os dois resultados sao apresentados juntos, e nenhum depende do outro.
-
-Escolha da grandeza
--------------------
-Velocidade RMS na banda 10-1000 Hz, que e a grandeza que a ISO 10816/20816
-adota para avaliar severidade. A escolha tambem se sustenta empiricamente: e o
-indicador que melhor ordena a severidade DENTRO de cada familia de falha
-(Spearman +0,82 em rolamento, +0,92 em desalinhamento, +0,89 em
-desbalanceamento), enquanto indicadores especificos falham nessa tarefa — a
-aceleracao em alta frequencia detecta rolamento muito bem, mas gradua mal
-(+0,13), porque nao cresce de forma monotonica com o tamanho do defeito.
-
-Dois criterios, conforme a norma
---------------------------------
-CRITERIO I  — magnitude absoluta, com as zonas A/B/C/D por classe de maquina.
-              Aplicavel sempre, sem referencia previa.
-CRITERIO II — variacao sobre uma referencia estabelecida para aquela maquina.
-              Mais sensivel, exige uma medicao de referencia (opcional no
-              sistema). E o criterio que discrimina na bancada do KAIST, onde
-              os valores absolutos sao baixos demais para a zona sair de A.
+    rolamento         +0,82
+    desalinhamento    +0,92
+    desbalanceamento  +0,89
 """
 
 from __future__ import annotations
@@ -50,23 +23,6 @@ class SeverityCriterion(StrEnum):
     ABSOLUTE = "ISO_10816_ZONA"          # criterio I
     RELATIVE = "ISO_10816_VARIACAO"      # criterio II
 
-
-#: Limiares do Criterio II, em multiplos da referencia saudavel.
-#:
-#: A ISO 10816-1 trata mudanca significativa em relacao a uma referencia, sem
-#: fixar multiplicadores universais — eles dependem da maquina. Os valores
-#: abaixo foram calibrados sobre a bancada do KAIST e devem ser reajustados
-#: para outra instalacao; ficam explicitos aqui por isso.
-#:
-#: Como a distribuicao se comporta com estes cortes (razao mediana por especime):
-#:      1,00x  normal                          -> HEALTHY
-#:      1,05x  desbalanceamento 583 mg         -> HEALTHY
-#:      1,39x  desbalanceamento 3.318 mg       -> HEALTHY
-#:      2,00x  desalinhamento nivel 3          -> WARNING
-#:      2,53x  rolamento externa 0,3 mm        -> WARNING
-#:      3,09x  rolamento interna 1,0 mm        -> WARNING
-#:      5,91x  rolamento interna 3,0 mm        -> FAILURE
-#:     13,88x  rolamento externa 3,0 mm        -> FAILURE
 RELATIVE_WARNING = 1.5
 RELATIVE_FAILURE = 4.0
 

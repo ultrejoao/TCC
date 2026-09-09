@@ -1,9 +1,5 @@
 """Inventario e sanidade fisica das 45 sessoes do KAIST.
 
-Entregavel da Noite 1: confirmar que o parsing funciona para todas as sessoes,
-que as duas modalidades estao pareadas, e que os sinais fazem sentido fisico
-(vibracao centrada em zero, corrente trifasica ~60 Hz, temperatura plausivel,
-RMS de vibracao crescendo com a severidade da falha).
 """
 
 import sys

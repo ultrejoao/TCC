@@ -1,14 +1,5 @@
 """Cria o primeiro usuario ADMIN.
 
-Nao existe endpoint publico de cadastro: em um sistema de manutencao industrial,
-ninguem deveria criar a propria conta. Este script roda uma vez, e a partir dai
-o ADMIN cadastra os demais usuarios.
-
-Uso:
-    python scripts/seed_admin.py --email admin@empresa.com --name "Nome"
-
-A senha e pedida de forma interativa (nao aparece no historico do terminal).
-Se preferir, pode vir da variavel de ambiente ADMIN_PASSWORD.
 """
 
 import argparse

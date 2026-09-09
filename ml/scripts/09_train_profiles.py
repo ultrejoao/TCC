@@ -1,16 +1,6 @@
-"""Treina e serializa os dois perfis de instrumentacao.
+"""Treina e serializa os perfis de instrumentacao.
 
-`kaist_full`    4 acelerometros + corrente, 97 features
-                E o modelo da metodologia e dos resultados do TCC.
-
-`field_single`  1 canal de vibracao, 25 features
-                E o modelo que opera com instrumentacao de campo.
-
-Ambos usam o mesmo ensemble (RF + XGBoost, soft voting), o mesmo protocolo de
-avaliacao (leave-one-specimen-out) e o mesmo formato de artefato, de modo que a
-API trata os dois de forma intercambiavel.
-
-As metricas gravadas nos metadados vem da VALIDACAO CRUZADA, nao deste treino:
+As metricas gravadas nos metadados vem da validacao cruzada, nao deste treino:
 o modelo de producao ve todos os dados e por isso nao pode ser avaliado neles.
 """
 
@@ -42,11 +32,6 @@ from signals.pipeline import PROFILE_FULL, PROFILE_SINGLE, PROFILES  # noqa: E40
 SEED = 42
 VERSION = "v1"
 
-#: Duracao da janela de analise. Precisa viajar DENTRO do artefato: o preditor
-#: le `bundle["window_seconds"]` para fatiar o sinal de campo exatamente como no
-#: treino. Antes o valor existia so nos metadados JSON, e o preditor caia num
-#: padrao de 1,0 s — inofensivo enquanto todos os perfis usam 1,0 s, e um erro
-#: silencioso no dia em que um perfil usar outra janela.
 WINDOW_SECONDS = 1.0
 INDICATORS = ["iso_v_rms_mms", "iso_v_1x_mms", "iso_v_2x_mms", "iso_a_hf_g"]
 

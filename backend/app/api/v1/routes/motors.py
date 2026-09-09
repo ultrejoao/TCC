@@ -1,8 +1,7 @@
 """CRUD de motores.
 
 A exclusao e SOFT: o motor sai do cadastro ativo mas o historico de medicoes e
-previsoes permanece, tanto para auditoria quanto para a rastreabilidade exigida
-pelo versionamento de modelos.
+previsoes permanece
 """
 
 import uuid

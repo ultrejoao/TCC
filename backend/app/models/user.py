@@ -1,7 +1,6 @@
 """Usuarios e trilha de auditoria.
 
-LGPD: nome e e-mail sao dados pessoais. A senha nunca e armazenada — apenas o
-hash argon2id. As acoes sensiveis ficam registradas em audit_logs.
+LGPD
 """
 
 import uuid

@@ -1,7 +1,7 @@
 """Gera as predicoes out-of-fold dos dois alvos, para uso na demonstracao.
 
 Cada janela e predita por um modelo que NAO viu o especime dela. E este o
-numero honesto: o modelo de producao (06_train_production.py) e treinado com
+numero honesto: o modelo de producao e treinado com
 tudo e por isso nao pode ser demonstrado sobre os proprios dados de treino.
 """
 

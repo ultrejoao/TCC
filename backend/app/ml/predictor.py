@@ -3,9 +3,6 @@
 Carrega o artefato do perfil adequado, extrai as features do sinal recebido,
 executa o ensemble nos dois alvos e cruza o resultado com a evidencia fisica.
 
-A camada de ML fica isolada aqui: nao ha logica de API neste modulo, e as rotas
-nao conhecem detalhes de modelo. E o isolamento que a especificacao pede para
-permitir extrair o ML em servico proprio no futuro, sem refatorar a API.
 """
 
 from __future__ import annotations
@@ -49,12 +46,6 @@ class ModelNotAvailable(RuntimeError):
 @dataclass
 class PredictionResult:
     """Saida do diagnostico.
-
-    A SEVERIDADE vem da avaliacao fisica (ISO 10816), nao do modelo. O rotulo de
-    severidade do dataset e uma convencao administrativa sem correspondencia
-    monotonica com o sinal, e treinar sobre ele deu recall de 0,0% para WARNING
-    em especimes ineditos. O ML responde o TIPO de falha, que e o que ele
-    demonstrou fazer bem (88,7% no protocolo estrito, rolamento em 100%).
 
     `ml_severity` e mantida como resultado do experimento preliminar, para
     comparacao — nao alimenta alertas nem decisao.
@@ -125,11 +116,6 @@ class Predictor:
     def _top_factors(self, bundle: dict, target: str, X: np.ndarray,
                      colunas: list[str], k: int = 5) -> list[dict[str, Any]]:
         """Principais fatores da decisao.
-
-        Usa a importancia do Random Forest ponderada pelo desvio da amostra em
-        relacao a media do treino. E uma aproximacao barata o suficiente para a
-        resposta sincrona; SHAP entra na camada de explicabilidade detalhada,
-        sob demanda, por ser ordens de grandeza mais custoso.
         """
         rf = bundle["targets"][target]["rf"]
         importancias = rf.feature_importances_

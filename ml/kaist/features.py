@@ -1,24 +1,19 @@
 """Extracao de caracteristicas por janela.
 
-Decisoes de projeto refletidas aqui (ver docs/01-inventario-dataset.md):
+Tres exclusoes que nao se inferem do codigo:
 
-  * Features do dominio da FREQUENCIA sao obrigatorias. O desbalanceamento
-    (15 das 45 sessoes) e indistinguivel do normal no RMS, mas separa bem na
-    amplitude em 1x a rotacao. Sem elas, um terco do dataset viraria falso
-    negativo.
-  * A TEMPERATURA nao entra no modelo: sua variacao entre sessoes (1,82 degC)
-    e ~7x maior que dentro de uma sessao (0,27 degC), o que a torna uma
-    impressao digital da sessao de gravacao, nao um sinal de falha. E extraida
-    mesmo assim, com prefixo `meta_`, para alimentar o dashboard e a discussao
-    do TCC.
-  * A CORRENTE entra com uma unica fase: as 9 sessoes BPFO tem as fases S e T
-    vazias no arquivo original.
+    temperatura   variacao entre sessoes 7x maior que dentro de uma sessao;
+                  e impressao digital da gravacao, entraria como vazamento
+    corrente      uma fase so: as 9 sessoes BPFO tem S e T vazias no original
+    acustica      o pacote cobre 5 das 45 sessoes
 
-Convencao de nomes das colunas:
-    vib_<canal>_<feature>   -> entra no modelo
-    cur_<feature>           -> entra no modelo
-    load_nm                 -> entra no modelo (conhecida pelo tecnico em campo)
-    meta_<...>              -> NAO entra no modelo
+Features espectrais sao obrigatorias: o desbalanceamento e indistinguivel do
+normal no RMS (0,102 -> 0,105 g), mas separa em 1x (0,00069 -> 0,00241).
+
+    vib_<canal>_<feature>   entra no modelo
+    cur_<feature>           entra no modelo
+    load_nm                 entra no modelo
+    meta_<...>              NAO entra no modelo
 """
 
 from __future__ import annotations

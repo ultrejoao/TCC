@@ -1,23 +1,4 @@
-"""Avaliacao do ensemble RF + XGBoost nos dois alvos e nos dois protocolos.
-
-Alvos
------
-  severity    HEALTHY / WARNING / FAILURE      (objetivo do TCC)
-  fault_type  normal / bearing / misalignment / unbalance
-              (alimenta a explicabilidade: "padrao consistente com desalinhamento")
-
-Protocolos
-----------
-  leave-one-specimen-out  isola a montagem fisica; defeito de tipo e grau ineditos
-  leave-one-load-out      isola a condicao de carga; o especime e compartilhado
-                          entre treino e teste — vazamento DECLARADO, nao ignorado
-
-Os dois protocolos estabelecem cenarios de dificuldade distintos para a
-generalizacao do modelo, fornecendo uma faixa de referencia metodologica para
-interpretar resultados futuros obtidos em dados de campo. NAO se deve inferir
-deles que o desempenho em campo ficara entre os dois valores: isso depende da
-distribuicao real dos motores monitorados.
-"""
+"""Avalia o ensemble nos dois alvos e nos dois protocolos de particao."""
 
 import sys
 from pathlib import Path

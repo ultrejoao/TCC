@@ -3,12 +3,10 @@
 Motivacao: o dataset KAIST tem 4 acelerometros e 3 fases de corrente, mas um
 sensor industrial tipico de monitoramento fornece UM canal de vibracao e nenhuma
 corrente. O modelo do TCC (metodologia e resultados) continua sendo o do KAIST
-completo; este script mede o que resta quando so ha um canal, para dimensionar
-honestamente o modo de campo do software.
+completo;
 
 Diferenca em relacao a 03_extract_features.py: os indicadores normativos sao
-calculados A PARTIR DO CANAL UNICO, e nao do maior valor entre os quatro — que
-seria informacao indisponivel na instrumentacao real.
+calculados A PARTIR DO CANAL UNICO, e nao do maior valor entre os quatro
 """
 
 import sys

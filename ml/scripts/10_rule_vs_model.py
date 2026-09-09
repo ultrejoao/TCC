@@ -1,24 +1,8 @@
-"""Regra de analise de vibracao contra modelo, na identificacao do tipo de falha.
+"""Regra classica de assinatura espectral contra o modelo, mesmo protocolo.
 
-Pergunta que este experimento responde
---------------------------------------
-Se a analise de assinatura espectral ja e conhecimento consolidado — 1x a
-rotacao indica desbalanceamento, 2x indica desalinhamento, alta frequencia
-indica rolamento — qual e a contribuicao de um modelo de aprendizado?
-
-E a pergunta que uma banca faz, e ela merece resposta medida, nao argumentada.
-
-Tres metodos, mesmo protocolo (leave-one-specimen-out), mesmo alvo:
-
-  A) REGRA DE LIVRO      a proporcao espectral mais destacada define o tipo,
-                         conforme a associacao classica da literatura.
-  B) REGRA EMPIRICA      protótipos das mesmas proporcoes, porem AJUSTADOS aos
-                         dados de treino de cada fold, em vez de transcritos da
-                         teoria.
-  C) ENSEMBLE            Random Forest + XGBoost sobre as 97 features.
-
-O que se espera aprender: quanto da tarefa a teoria classica resolve sozinha, e
-onde ela falha neste dataset especifico.
+    A) regra de livro     a proporcao espectral mais destacada define o tipo
+    B) regra empirica     os mesmos protótipos, ajustados ao treino de cada fold
+    C) ensemble           Random Forest + XGBoost sobre as 97 features
 """
 
 import sys

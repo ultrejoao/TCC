@@ -1,8 +1,6 @@
 """Alertas e painel inicial.
 
-O painel responde uma pergunta so: **o que precisa de atencao agora?** Por isso
-o centro dele e a fila de motores ordenada por prioridade, e nao um conjunto de
-totais. Totais dizem como a planta esta; a fila diz o que fazer em seguida.
+O painel responde uma pergunta so: **o que precisa de atencao agora?** 
 """
 
 import uuid

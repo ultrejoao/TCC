@@ -1,17 +1,6 @@
 """Registro de modelos: qual esta ativo, quanto acerta e o que nao faz.
 
-A decisao de que toda previsao referencia o modelo que a gerou so vira
-rastreabilidade util quando existe onde ler esse registro. Esta rota e essa
-superficie.
 
-Duas escolhas de apresentacao que sao deliberadas:
-
-  * **Os dois protocolos aparecem sempre.** O mesmo modelo mede 88,7 % sob
-    leave-one-specimen-out e 80,6 % sob leave-one-load-out. Publicar so o mais
-    favoravel seria a forma mais facil de enganar sem mentir.
-  * **As limitacoes conhecidas viajam com o modelo.** Ficam gravadas no
-    registro e sao devolvidas aqui, para nao dependerem de alguem lembrar de
-    abrir a documentacao.
 """
 
 import hashlib

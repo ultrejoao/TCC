@@ -1,23 +1,10 @@
-"""Adaptadores de leitura de sinal.
+"""Adaptadores de leitura: todo formato vira um RawSignal.
 
-Cada instrumento grava num formato proprio. Em vez de espalhar essa variacao
-pelo pipeline, todo formato e normalizado aqui num `RawSignal`, e o restante do
-sistema so conhece essa estrutura.
-
-Consequencia pratica: dar suporte a um instrumento novo e escrever UM adaptador
-e registra-lo. Nem a extracao de features, nem o modelo, nem a API mudam.
-
-Formatos suportados hoje:
-
-    .mat    LMS Test.Lab (formato do dataset KAIST) — taxa embutida
-    .tdms   National Instruments FlexLogger         — taxa embutida
-    .wav    audio/vibracao PCM                      — taxa embutida
-    .npy    array NumPy cru                         — taxa deve ser informada
-    .csv    texto delimitado                        — taxa deve ser informada
-
-Formatos autodescritivos trazem a taxa de amostragem no proprio arquivo. Os
-demais exigem que o tecnico informe `sample_rate_hz` no formulario — sem ela
-nao ha como calcular frequencia nenhuma, e adivinhar seria pior que recusar.
+    .mat    LMS Test.Lab (dataset KAIST)      taxa embutida
+    .tdms   NI FlexLogger                     taxa embutida
+    .wav    audio/vibracao PCM                taxa embutida
+    .npy    array NumPy cru                   taxa deve ser informada
+    .csv    texto delimitado                  taxa deve ser informada
 """
 
 from __future__ import annotations

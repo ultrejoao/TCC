@@ -1,7 +1,7 @@
 """Medicoes e inferencia sincrona.
 
 O tecnico envia o sinal coletado em campo e recebe o diagnostico na MESMA
-requisicao — sem fila, sem polling. A escolha e deliberada: em campo, o tecnico
+requisicao — sem fila, sem polling. A escolha e deliberada: em campo,
 precisa saber se deve agir antes de sair de perto da maquina.
 """
 
@@ -9,7 +9,11 @@ import hashlib
 import re
 import uuid
 from datetime import datetime, timezone
+from math import ceil
+from pathlib import Path
 from typing import Annotated
+
+import numpy as np
 
 from fastapi import (
     APIRouter, Depends, File, Form, Query, Request, UploadFile, status,
@@ -23,12 +27,14 @@ from app.core.deps import CurrentUser, audit, require_csrf
 from app.core.errors import ProblemException
 from app.database import get_db
 from app.ml.predictor import ModelNotAvailable, get_predictor
+from config import MS2_TO_G  # noqa: E402
 from signals.readers import SignalReadError, read_signal  # noqa: E402
 from app.models.alert import Alert, Inspection
 from app.models.measurement import Measurement, Prediction
 from app.models.ml_model import MLModel
 from app.models.motor import Motor
 from app.schemas.common import Page
+from app.schemas.waveform import WaveformOut, WaveformPoint
 from app.schemas.measurement import (
     MeasurementContext,
     MeasurementListItem,
@@ -265,6 +271,7 @@ async def criar_medicao(
         current_a=ctx.current_a, operating_hours=ctx.operating_hours,
         is_baseline=ctx.is_baseline,
         source_filename=nome_original, source_path=str(destino),
+        source_unit=ctx.unit,
         source_sha256=digest,
         sample_rate_hz=sinal.sample_rate, n_samples=sinal.n_samples,
         n_channels=sinal.n_channels, duration_s=sinal.duration_s,
@@ -398,3 +405,81 @@ def obter_medicao(measurement_id: uuid.UUID, db: DbSession,
         saida.prediction = PredictionOut.model_validate(medicao.prediction)
         saida.model_version = medicao.prediction.ml_model.version
     return saida
+
+
+@router.get("/measurements/{measurement_id}/waveform", response_model=WaveformOut)
+def forma_de_onda(
+    measurement_id: uuid.UUID, db: DbSession, user: CurrentUser,
+    channel: Annotated[int, Query(ge=0, le=15)] = 0,
+    max_points: Annotated[int, Query(ge=200, le=4000)] = 1200,
+) -> WaveformOut:
+    """Forma de onda do sinal, reduzida para exibicao.
+
+    A reducao e por ENVELOPE (min e max de cada balde), nao por amostragem. Em
+    vibracao o conteudo diagnostico esta em picos curtos: o impacto de um
+    defeito de pista dura microssegundos. Pegar uma amostra a cada N descartaria
+    esses picos e desenharia um sinal mais limpo do que o medido — um erro que
+    ninguem percebe olhando o grafico.
+
+    Os escalares (pico a pico, pico, RMS) vem do sinal INTEIRO, nao dos pontos
+    devolvidos, para que o numero exibido nao dependa da resolucao do grafico.
+    """
+    medicao = db.get(Measurement, measurement_id)
+    if medicao is None:
+        raise ProblemException(status.HTTP_404_NOT_FOUND, "Recurso nao encontrado",
+                               "Medicao nao encontrada.")
+
+    if not medicao.source_path or not Path(medicao.source_path).exists():
+        raise ProblemException(
+            status.HTTP_410_GONE, "Sinal indisponivel",
+            "O arquivo bruto desta medicao nao esta mais armazenado. Os "
+            "indicadores e o diagnostico permanecem no historico.")
+
+    try:
+        sinal = read_signal(
+            Path(medicao.source_path),
+            sample_rate_hz=medicao.sample_rate_hz,
+            # a mesma unidade declarada no envio, para que o grafico fique na
+            # mesma escala das features gravadas; sem registro, o leitor assume
+            # m/s^2, que e o padrao do proprio envio
+            **({"unit": medicao.source_unit} if medicao.source_unit else {}))
+    except SignalReadError as e:
+        raise ProblemException(status.HTTP_422_UNPROCESSABLE_ENTITY,
+                               "Sinal ilegivel", str(e)) from e
+
+    if channel >= sinal.n_channels:
+        raise ProblemException(
+            status.HTTP_422_UNPROCESSABLE_ENTITY, "Canal inexistente",
+            f"O sinal tem {sinal.n_channels} canal(is); pedido o indice {channel}.")
+
+    # analise em g, que e a unidade em que o tecnico le aceleracao
+    x = sinal.samples[:, channel].astype(float) * MS2_TO_G
+    x = x - x.mean()                      # o offset DC nao e vibracao
+    n = len(x)
+
+    rms = float(np.sqrt(np.mean(x**2)))
+    pico = float(np.abs(x).max())
+
+    fator = max(1, ceil(n / max_points))
+    util = (n // fator) * fator
+    blocos = x[:util].reshape(-1, fator)
+    tempos = np.arange(len(blocos)) * fator / sinal.sample_rate
+
+    return WaveformOut(
+        measurement_id=str(measurement_id),
+        channel=channel,
+        channel_name=sinal.channel_names[channel],
+        unit="g",
+        sample_rate_hz=sinal.sample_rate,
+        n_samples=n,
+        duration_s=n / sinal.sample_rate,
+        decimation=fator,
+        points=[WaveformPoint(t=round(float(t), 5),
+                              min=round(float(b.min()), 5),
+                              max=round(float(b.max()), 5))
+                for t, b in zip(tempos, blocos, strict=True)],
+        peak_to_peak_g=round(float(x.max() - x.min()), 5),
+        peak_g=round(pico, 5),
+        rms_g=round(rms, 5),
+        crest_factor=round(pico / rms, 3) if rms else 0.0,
+    )

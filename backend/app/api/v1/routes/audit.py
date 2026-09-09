@@ -1,19 +1,4 @@
-"""Leitura da trilha de auditoria.
-
-A trilha ja era escrita por catorze pontos do sistema — login, criacao e
-remocao de motor, medicao, resolucao de alerta, reuso de refresh token — mas
-nao havia como le-la. Um controle que ninguem consegue consultar nao e um
-controle: e um registro que so seria aberto com acesso direto ao banco, ou
-seja, exatamente quando ja e tarde.
-
-O que NAO existe aqui, deliberadamente: escrita, edicao e remocao. A trilha e
-somente-leitura pela API. Qualquer endpoint que a alterasse anularia o motivo
-de ela existir.
-
-Limitacao declarada: a v1 tem login unico, sem perfis. Qualquer usuario
-autenticado le a trilha inteira. Com RBAC, esta rota exigiria perfil
-administrativo — esta anotado como trabalho futuro no TCC.
-"""
+"""Leitura da trilha de auditoria"""
 
 import uuid
 from datetime import datetime, timedelta, timezone

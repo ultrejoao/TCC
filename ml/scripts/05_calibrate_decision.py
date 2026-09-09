@@ -1,7 +1,6 @@
 """Calibra a margem de concordancia da matriz de decisao.
 
-Objetivo: escolher quanto o sistema sinaliza. Margem pequena sinaliza muito
-(fadiga de alarme); margem grande sinaliza pouco (perde erros). O criterio e o
+Objetivo: escolher quanto o sistema sinaliza. Margem pequena sinaliza muito; margem grande sinaliza pouco. O criterio e o
 ganho: quanto a taxa de erro sobe entre as janelas sinalizadas em relacao as
 nao sinalizadas, e que fracao dos erros totais e capturada.
 """

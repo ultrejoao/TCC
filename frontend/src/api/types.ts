@@ -279,61 +279,6 @@ export const ROTULO_REGRA: Record<string, string> = {
   DEGRADACAO_INCERTA: "Degradação com evidências incertas",
 };
 
-/* --- registro de modelos ------------------------------------------------- */
-
-export interface ModelSummary {
-  version: string;
-  algorithm: string;
-  is_active: boolean;
-  n_features: number | null;
-  n_windows: number | null;
-  trained_at: string | null;
-  dataset: string | null;
-  fault_type_accuracy: number | null;
-  severity_accuracy: number | null;
-  protocol: string | null;
-  prediction_count: number;
-}
-
-export interface ProtocolResult {
-  protocol: string;
-  description: string;
-  fault_type_accuracy: number | null;
-  severity_accuracy: number | null;
-  fault_type_recall: Record<string, number>;
-  severity_recall: Record<string, number>;
-}
-
-export interface ArtifactIntegrity {
-  path: string;
-  expected_sha256: string | null;
-  present: boolean;
-  matches: boolean | null;
-  message: string;
-}
-
-export interface ModelDetail {
-  version: string;
-  algorithm: string;
-  is_active: boolean;
-  description: string | null;
-  dataset: string | null;
-  n_windows: number | null;
-  n_features: number | null;
-  window_seconds: number | null;
-  trained_at: string | null;
-  protocols: ProtocolResult[];
-  known_limitations: string[];
-  hyperparameters: Record<string, unknown>;
-  feature_columns: string[];
-  feature_groups: Record<string, number>;
-  holdout_note: string | null;
-  holdout_specimens: string[];
-  integrity: ArtifactIntegrity;
-  prediction_count: number;
-  last_prediction_at: string | null;
-}
-
 /* --- inspecoes de campo -------------------------------------------------- */
 
 export interface Inspection {
@@ -352,22 +297,7 @@ export interface Inspection {
   agreement: boolean | null;
 }
 
-export interface FieldAccuracyByModel {
-  model_version: string;
-  n_confirmed: number;
-  n_correct: number;
-  accuracy: number | null;
-}
 
-export interface FieldAccuracy {
-  n_inspections: number;
-  n_confirmed: number;
-  n_correct: number;
-  accuracy: number | null;
-  confusion: Record<string, Record<string, number>>;
-  by_model: FieldAccuracyByModel[];
-  caveat: string;
-}
 
 /* --- auditoria ----------------------------------------------------------- */
 
@@ -390,4 +320,28 @@ export interface AuditSummary {
   sensitive: Record<string, number>;
   first_event: string | null;
   last_event: string | null;
+}
+
+/* --- forma de onda ------------------------------------------------------- */
+
+export interface WaveformPoint {
+  t: number;
+  min: number;
+  max: number;
+}
+
+export interface Waveform {
+  measurement_id: string;
+  channel: number;
+  channel_name: string;
+  unit: string;
+  sample_rate_hz: number;
+  n_samples: number;
+  duration_s: number;
+  decimation: number;
+  points: WaveformPoint[];
+  peak_to_peak_g: number;
+  peak_g: number;
+  rms_g: number;
+  crest_factor: number;
 }

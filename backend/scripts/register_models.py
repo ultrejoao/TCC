@@ -1,12 +1,5 @@
 """Registra os artefatos de modelo na tabela `ml_models`.
 
-Toda previsao referencia o modelo que a gerou. Sem este registro, a API nao tem
-como gravar a rastreabilidade — e por isso a inferencia recusa operar com um
-artefato nao registrado.
-
-O hash SHA-256 do arquivo e gravado junto: se o artefato em disco for
-substituido sem passar por aqui, a divergencia e detectavel.
-
 Uso:
     python scripts/register_models.py
     python scripts/register_models.py --activate kaist_full

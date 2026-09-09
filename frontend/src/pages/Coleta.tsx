@@ -22,6 +22,7 @@ import {
   SeloEvidencia,
   SeloSeveridade,
 } from "../components/ui";
+import FormaDeOnda from "../components/FormaDeOnda";
 import { useApi } from "../hooks/useApi";
 
 /** Formatos que trazem a taxa de amostragem dentro do proprio arquivo. */
@@ -199,6 +200,10 @@ export default function Coleta() {
           </div>
         </section>
       )}
+
+      {/* O sinal que originou o diagnostico, logo abaixo dele: o tecnico ve a
+          medicao e a leitura na mesma tela, sem navegar. */}
+      {resultado && <FormaDeOnda medicaoId={resultado.id} />}
 
       {!resultado && (
         <form onSubmit={enviar} className="cartao">

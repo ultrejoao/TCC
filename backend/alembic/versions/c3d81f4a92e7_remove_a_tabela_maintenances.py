@@ -1,16 +1,8 @@
 """Remove a tabela maintenances
 
-A tabela foi criada no schema inicial e nunca ganhou rota, tela ou registro:
-zero linhas em producao. Historico de intervencao e uma funcionalidade legitima
-de um sistema de manutencao preditiva, mas nao sustenta nenhuma pergunta deste
-trabalho — ao contrario de `inspections`, que carrega a confirmacao de campo do
-tipo de falha e por isso permanece.
-
-Schema morto nao e neutro: sugere uma capacidade que o sistema nao tem e obriga
-quem le o modelo de dados a descobrir sozinho que nada escreve ali.
-
-O downgrade recria a tabela na forma exata em que existia, entao a decisao e
-reversivel. Nao ha dados a preservar.
+Criada no schema inicial, nunca ganhou rota nem tela: zero linhas em producao.
+Ao contrario de `inspections`, que carrega a confirmacao de campo do tipo de
+falha, nao sustenta nenhuma pergunta deste trabalho.
 
 Revision ID: c3d81f4a92e7
 Revises: 7a6a5d1822db

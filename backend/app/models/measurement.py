@@ -3,11 +3,6 @@
 Fluxo: o tecnico envia o sinal bruto coletado em campo; a API extrai as
 features, o modelo classifica e a previsao e gravada junto — tudo na mesma
 requisicao.
-
-O sinal bruto NAO e guardado no banco: a 25.600 Hz, 4 canais, 1 s ja sao
-~800 KB. Guarda-se o caminho do arquivo, o hash e os metadados de aquisicao,
-alem das features extraidas (JSONB). Os indicadores normativos ficam em colunas
-proprias porque alimentam graficos e consultas de historico.
 """
 
 import uuid
@@ -63,6 +58,11 @@ class Measurement(Base, TimestampMixin):
     source_filename: Mapped[str | None] = mapped_column(String(255))
     source_path: Mapped[str | None] = mapped_column(String(500))
     source_sha256: Mapped[str | None] = mapped_column(String(64), index=True)
+
+    # Unidade em que o sinal foi declarado no envio. Sem ela o arquivo guardado
+    # nao pode ser reinterpretado depois: os mesmos numeros valem 1 ou 9,80665
+    # conforme tenham sido enviados em g ou em m/s^2.
+    source_unit: Mapped[str | None] = mapped_column(String(10))
     sample_rate_hz: Mapped[float] = mapped_column(Float, nullable=False)
     n_samples: Mapped[int] = mapped_column(Integer, nullable=False)
     n_channels: Mapped[int] = mapped_column(Integer, nullable=False)

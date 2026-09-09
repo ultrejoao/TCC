@@ -1,27 +1,11 @@
 """Indicadores normativos de vibracao (ISO 10816 / ISO 20816).
 
-Papel no sistema: **camada de validacao fisica**, exibida ao lado da classe
-prevista pelo modelo. Nao substitui a predicao — sinaliza divergencia entre o
-diagnostico estatistico e o criterio normativo.
-
-Quatro indicadores, cada um sensivel a uma familia de falha diferente:
-
-    v_iso   velocidade RMS 10-1000 Hz  [mm/s]  severidade global (ISO 10816)
+    v_iso   velocidade RMS 10-1000 Hz  [mm/s]  severidade global
     v_1x    velocidade RMS na rotacao  [mm/s]  desbalanceamento
     v_2x    velocidade RMS em 2x       [mm/s]  desalinhamento
     a_hf    aceleracao RMS 1-10 kHz    [g]     impacto de rolamento
 
-Por que a velocidade e nao a aceleracao: a ISO avalia severidade em velocidade,
-grandeza proporcional a energia de vibracao na faixa de operacao de maquinas
-rotativas. A conversao e feita no dominio da frequencia, V(f) = A(f)/(2*pi*f).
-
-Limitacao documentada (ver docs/02-resultados-baseline.md, secao 7): em
-magnitude absoluta (Criterio I da norma) todas as 45 sessoes do KAIST caem na
-zona A, inclusive rolamentos com defeito de 3 mm — a bancada e pequena e rigida,
-e a integracao para velocidade atenua a alta frequencia onde vive a falha de
-rolamento. Os indicadores por isso sao mais informativos de forma RELATIVA, o
-que corresponde ao Criterio II da propria norma (variacao sobre uma referencia
-estabelecida).
+Conversao para velocidade no dominio da frequencia: V(f) = A(f) / (2*pi*f).
 """
 
 from __future__ import annotations

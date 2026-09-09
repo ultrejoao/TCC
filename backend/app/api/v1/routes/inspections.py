@@ -1,17 +1,4 @@
-"""Inspecoes de campo: o retorno da realidade para dentro do sistema.
-
-Todo o resto do fluxo vai numa direcao so — o tecnico mede, o sistema
-diagnostica. A inspecao e a unica entrada de informacao que o modelo nao
-produziu: o que se encontrou ao abrir a maquina.
-
-Isso fecha o laco. Com a confirmacao vinculada a previsao, o acerto passa a ser
-medivel contra a realidade e nao apenas contra a particao de teste do KAIST —
-que e outra coisa, e mais fraca, por ser o mesmo dataset que treinou.
-
-O numero resultante e enviesado por construcao, e o endpoint devolve esse aviso
-junto: inspeciona-se o que o sistema apontou como problema, e quase nunca o que
-ele chamou de saudavel.
-"""
+"""Inspecoes de campo: o que o tecnico encontrou ao abrir a maquina."""
 
 import uuid
 from typing import Annotated

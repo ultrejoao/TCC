@@ -2,11 +2,10 @@
 
 Janelamento de 1 s SEM sobreposicao. A ausencia de overlap e deliberada:
 janelas sobrepostas compartilham amostras e aumentam a correlacao entre
-vizinhas, o que infla o numero aparente de exemplos sem acrescentar informacao.
+vizinhas.
 
 As duas modalidades tem taxas diferentes (25.600,00 Hz e 25.608,19 Hz), entao o
-alinhamento e feito por TEMPO: a janela k cobre [k, k+1) segundos em ambas, com
-indices calculados a partir da respectiva taxa.
+alinhamento e feito por TEMPO: a janela k cobre [k, k+1) segundos em ambas
 """
 
 import sys

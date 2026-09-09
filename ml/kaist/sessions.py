@@ -1,19 +1,8 @@
-"""
-Parsing dos nomes de sessao do dataset KAIST -> metadados + rotulo de severidade.
+"""Parsing dos nomes de sessao do KAIST: metadados e rotulo de severidade.
 
-Este modulo concentra a DECISAO DE ROTULAGEM do projeto (documentar no TCC):
-como as tres familias de falha do KAIST usam unidades de severidade nao
-comparaveis entre si (mm de defeito, nivel de desalinhamento, mg de massa),
-o corte HEALTHY/WARNING/FAILURE e definido POR FAMILIA e nao por um limiar
-numerico global:
-
-    - menor nivel de severidade de cada familia  -> WARNING
-    - niveis intermediario e superior            -> FAILURE
-    - condicao normal                            -> HEALTHY
-
-A localizacao/tipo do defeito (pista interna, pista externa, eixo, rotor) e
-preservada como metadado para a camada de explicabilidade, mas NAO determina
-sozinha a classe.
+    menor nivel de cada familia   -> WARNING
+    niveis intermediario e maior  -> FAILURE
+    condicao normal               -> HEALTHY
 """
 
 from __future__ import annotations
@@ -21,18 +10,18 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, asdict
 
-# --- classes de saida do modelo -------------------------------------------
+# classes de saida do modelo
 HEALTHY = "HEALTHY"
 WARNING = "WARNING"
 FAILURE = "FAILURE"
 
-# --- familias de falha ------------------------------------------------------
+# familias de falha 
 NORMAL = "normal"
 BEARING = "bearing"
 MISALIGNMENT = "misalignment"
 UNBALANCE = "unbalance"
 
-# Ordem de severidade por familia. O indice na lista (1-based) e o nivel.
+# Ordem de severidade por familia.
 # O nivel 1 vira WARNING; os demais viram FAILURE.
 SEVERITY_ORDER = {
     BEARING: ["03", "10", "30"],                       # 0.3 / 1.0 / 3.0 mm
@@ -40,7 +29,7 @@ SEVERITY_ORDER = {
     UNBALANCE: ["0583", "1169", "1751", "2239", "3318"],  # mg de desbalanceamento
 }
 
-# Valor fisico da severidade, para documentacao/explicabilidade.
+# Valor fisico da severidade.
 SEVERITY_PHYSICAL = {
     (BEARING, "03"): (0.3, "mm"),
     (BEARING, "10"): (1.0, "mm"),

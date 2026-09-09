@@ -21,10 +21,16 @@ export default function Alertas() {
     `/alerts?status=OPEN&limit=100` + (soDivergencia ? "&only_divergence=true" : "");
   const { dados, carregando, erro, recarregar } = useApi<Page<Alert>>(caminho);
 
-  async function tratar(id: string, status: string) {
+  /**
+   * Resolver e a UNICA transicao oferecida, e e terminal: a API recusa reabrir
+   * (409). O estado ACKNOWLEDGED existe no modelo, mas nao tinha tela onde o
+   * alerta reconhecido reaparecesse — some da lista igual ao resolvido, sem
+   * volta. Dois botoes com o mesmo efeito visivel confundiam mais que ajudavam.
+   */
+  async function resolver(id: string) {
     setSalvando(id);
     try {
-      await put(`/alerts/${id}`, { status });
+      await put(`/alerts/${id}`, { status: "RESOLVED" });
       recarregar();
     } finally {
       setSalvando(null);
@@ -102,15 +108,7 @@ export default function Alertas() {
             <button
               className="secundario"
               disabled={salvando === a.id}
-              onClick={() => tratar(a.id, "ACKNOWLEDGED")}
-              style={{ padding: "0.3rem 0.75rem", fontSize: "0.85rem" }}
-            >
-              Reconhecer
-            </button>
-            <button
-              className="secundario"
-              disabled={salvando === a.id}
-              onClick={() => tratar(a.id, "RESOLVED")}
+              onClick={() => resolver(a.id)}
               style={{ padding: "0.3rem 0.75rem", fontSize: "0.85rem" }}
             >
               Resolver
