@@ -258,9 +258,6 @@ ml/
     12_metricas_completas.py    dispersão, por classe, macro-F1, MCC
 ```
 
-O `06` não existe: era o treino de produção, substituído pelo `09_train_profiles.py`
-quando os perfis de instrumentação foram introduzidos.
-
 ### Perfis de instrumentação
 
 O mesmo código extrai features no treino e em produção. Se fossem dois caminhos,
@@ -325,9 +322,6 @@ outras versões, atualizar o arquivo junto.
 
 ## Limitações conhecidas
 
-- **Sem testes automatizados.** É a lacuna mais visível do ponto de vista de
-  engenharia de software. A lógica que mais precisa de cobertura é a política de
-  alerta, o critério de severidade e o fluxo de autenticação.
 - **Recall de WARNING = 0,0 %** sob leave-one-specimen-out. Os rótulos de
   severidade do dataset são administrativos, não físicos, e há um único espécime
   por nível — o modelo precisa graduar uma escala que nunca viu. Sob
@@ -346,9 +340,6 @@ outras versões, atualizar o arquivo junto.
   dentro de uma sessão, o que a torna uma impressão digital da gravação e não um
   sinal de falha.
 - **Acústica fora do escopo.** O pacote original cobre apenas 5 das 45 sessões.
-- **Sem perfis de acesso.** A v1 tem login único; qualquer usuário autenticado lê
-  a trilha de auditoria inteira. Com RBAC, essa rota exigiria perfil
-  administrativo.
 
 ---
 
